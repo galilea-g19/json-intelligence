@@ -1,21 +1,13 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import SecretStr, field_validator
 
 class Settings(BaseSettings):
-    openai_api_key: str
+    openai_api_key: SecretStr 
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        env_file_encoding="utf-8", 
+        extra="ignore"
+    )
 
 settings = Settings()
-
-```
-**Validate `main.py`:**
-```python
-    from fastapi import FastAPI
-    from app.core.config import settings
-
-    app = FastAPI()
-
-    @app.get("/check-config")
-    def test_config():
-        return {"key_exists": bool(settings.openai_api_key)}
-```
