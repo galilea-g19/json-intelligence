@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from app.core.config import settings
+from app.routes.json_routes import router
 
 load_dotenv()
 app = FastAPI()
@@ -19,3 +20,6 @@ def test_env():
     if key_exists:
         return {"status": "Configurada", "preview": f"{key[:5]}..."}
     return {"status": "No encontrada", "preview": None}
+
+
+app.include_router(router, prefix="/api/v1")
