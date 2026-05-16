@@ -11,7 +11,7 @@ async def analyze_json_endpoint(payload: JsonInput):
         result = analyze_json(payload.data)
 
         return {
-            "key_count": result["summary"]["total_keys"],
+            "key_count": result["summary"]["total_keys_recursive"],
             "types": result["summary"]["key_types"],
             "nested_structure": result["structure"]
         }
