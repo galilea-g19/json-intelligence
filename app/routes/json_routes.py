@@ -6,16 +6,15 @@ from app.services.analyzer import analyze_json
 router = APIRouter()
 
 @router.post("/analyze", response_model=AnalysisResponse)
-async def analyze_json(payload: JsonInput):
+async def analyze_json_endpoint(payload: JsonInput):
     try:
-        data = payload.data
-        types_dict = {k: type(v).__name__ for k, v in data.items()}
-        result = {
-            "key_count": len(data),
-            "types": {k: type(v).__name__ for k, v in data.items()},
-            "nested_structure": {"info": {"Example": "Salir"}}
-        }
+        result = analyze_json(payload.data)
 
-        return result
+        return {
+            "key_count": result["summary"]["total_keys"],
+            "types": result["summary"]["key_types"],
+            "nested_structure": result["structure"]
+        }
+    
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
