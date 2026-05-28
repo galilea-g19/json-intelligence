@@ -16,7 +16,6 @@ def analyze_json(data: Dict[str, Any], parent_key: str = "") -> Dict[str, Any]:
         summary["total_keys_recursive"] += 1
         summary["key_types"][current_path] = value_type
 
-        print("current_path -->",current_path)
         if isinstance(value, dict):
             nested_result = analyze_json(value, current_path)
             summary["total_keys_recursive"] += nested_result["summary"]["total_keys_recursive"]
