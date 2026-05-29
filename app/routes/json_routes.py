@@ -4,13 +4,16 @@ from app.models.response_models import AnalysisResponse, ErrorResponse, SchemaRe
 from app.services.analyzer import analyze_json
 from app.services.schema_generator import generate_schema
 from app.services.ai import explain_json
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_json_endpoint(payload: JsonInput):
     try:
         result = analyze_json(payload.data)
+        logger.info(f"Analysis successful. Total keys: {result['summary']['total_keys']}")
 
         return {
             "key_count": result["summary"]["total_keys_recursive"],
@@ -39,6 +42,8 @@ async def explain_json_endpoint(payload: JsonInput):
     try:
         data = payload.data 
         explanation = explain_json(data)
+
+        logger.info(f"Explanation successful. Response form AI: {explanation}")
         return ExplainResponse(explanation=explanation)
 
     except ValueError as ve:
