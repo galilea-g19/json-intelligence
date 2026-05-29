@@ -2,7 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import SecretStr, field_validator
 
 class Settings(BaseSettings):
-    openai_api_key: SecretStr 
+    openai_api_key: SecretStr | None = None 
+    groq_api_key: SecretStr | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env", 

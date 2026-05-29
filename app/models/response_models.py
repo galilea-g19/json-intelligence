@@ -19,3 +19,6 @@ class ErrorResponse(BaseModel):
     """ Standar response for errors """
     error: str
     details: Optional[str] = None
+
+class ExplainResponse(BaseModel):
+    explanation: str
