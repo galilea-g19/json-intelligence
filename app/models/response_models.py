@@ -7,8 +7,8 @@ class AnalysisResponse(BaseModel):
     types: Dict[str, str]
     nested_structure: Dict[str, Any]
 
-class SchemaResponse():
-    """ Response from endpoint / generate-schema """
+class SchemaResponse(BaseModel):
+    """ Response from endpoint / schema """
     schema: Dict[str, Any]
 
 class ExplainResponse(BaseModel):
