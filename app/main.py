@@ -3,9 +3,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from app.core.config import settings
 from app.routes.json_routes import router
+from app.core.exceptions import register_error_handlers
 
 load_dotenv()
 app = FastAPI()
+register_error_handlers(app)
 
 print(f"Valor de la key: {os.getenv('OPENAI_API_KEY')}")
 
