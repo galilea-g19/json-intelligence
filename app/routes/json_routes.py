@@ -13,7 +13,7 @@ router = APIRouter()
 async def analyze_json_endpoint(payload: JsonInput):
     try:
         result = analyze_json(payload.data)
-        logger.info(f"Analysis successful. Total keys: {result['summary']['total_keys']}")
+        logger.info(f"Analysis successful. Total keys: {result['summary']['total_keys_recursive']}")
 
         return {
             "key_count": result["summary"]["total_keys_recursive"],
