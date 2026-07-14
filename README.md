@@ -26,20 +26,6 @@ Creates a valid JSON Schema automatically from input data.
 
 Uses AI to generate human-readable explanations of structured data.
 
-# Why this project matters
-
-This project is not intended to be just another JSON viewer.
-
-It is designed to demonstrate:
-
-- backend problem-solving
-- API-first thinking
-- structured AI integration
-- developer tooling concepts
-- scalable service design
-
----
-
 # Long-Term Vision
 
 Potential future improvements include:
