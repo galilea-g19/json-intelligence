@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict
 
 def _get_unique_types(values: list) -> list:
@@ -5,11 +6,10 @@ def _get_unique_types(values: list) -> list:
     seen = set()
     for v in values:
         schema = _get_type_schema(v, "item")
-        key = frozenset(schema.items())
+        key = json.dumps(schema, sort_keys=True)
         if key not in seen:
             seen.add(key)
             schemas.append(schema)
-
 
     return schemas
 

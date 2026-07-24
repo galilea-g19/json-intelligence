@@ -265,3 +265,4 @@
 2026-07-13 21:34:20 - app.main - INFO - Application startup complete. Ready to accept requests.
 2026-07-13 21:34:25 - app.routes.json_routes - INFO - Analysis successful. Total keys: 3
 2026-07-13 23:03:07 - app.main - INFO - Application shutting down.
+2026-07-23 23:25:14 - asyncio - DEBUG - Using proactor: IocpProactor
