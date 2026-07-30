@@ -133,7 +133,7 @@ Potential future improvements include:
 
 # 📌 EPIC 1 — Setup backend (FastAPI)
 
-## 🟢 Issue #1 — Initialize FastAPI project
+## Issue #1 — Initialize FastAPI project
 
 **Descripción**
 
@@ -163,7 +163,7 @@ Crear base del proyecto en Python
 uvicorn app.main:app--reload
 ```
 
-## 🟢 Issue #2 — Environment configuration
+## Issue #2 — Environment configuration
 
 **Descripción**
 
@@ -181,7 +181,7 @@ Manejo de variables de entorno
 
 - App lee variables correctamente
 
-## 🟢 Issue #3 — Request validation with Pydantic
+## Issue #3 — Request validation with Pydantic
 
 **Descripción**
 
@@ -201,7 +201,7 @@ classJsonInput(BaseModel):json:dict
 
 # 📌 EPIC 2 — Core JSON Logic
 
-## 🟢 Issue #4 — Implement JSON analyzer service
+## Issue #4 — Implement JSON analyzer service
 
 **Descripción**
 
@@ -219,7 +219,7 @@ Analizar estructura del JSON
   - resumen
   - estructura
 
-## 🟢 Issue #5 — Create `/analyze` endpoint
+## Issue #5 — Create `/analyze` endpoint
 
 **Descripción**
 
@@ -231,7 +231,7 @@ POST /api/v1/json/analyze
 
 - Endpoint funcional con respuesta clara
 
-## 🟢 Issue #6 — Implement schema generator
+## Issue #6 — Implement schema generator
 
 **Descripción**
 
@@ -243,7 +243,7 @@ Generar JSON Schema
 - Detectar required fields
 - Soportar nested
 
-## 🟢 Issue #7 — Create `/schema` endpoint
+## Issue #7 — Create `/schema` endpoint
 
 **DoD**
 
@@ -251,7 +251,7 @@ Generar JSON Schema
 
 # 📌 EPIC 3 — AI Integration
 
-## 🟢 Issue #8 — Setup AI service
+## Issue #8 — Setup AI service
 
 **Descripción**
 
@@ -264,7 +264,7 @@ Servicio para llamadas a AI
   - recibe JSON
   - retorna explicación estructurada
 
-## 🟢 Issue #9 — Implement `/explain` endpoint
+## Issue #9 — Implement `/explain` endpoint
 
 ```
 POST /api/v1/json/explain
@@ -279,7 +279,7 @@ POST /api/v1/json/explain
 
 - Output consistente
 
-## 🟢 Issue #10 — Validate AI response
+## Issue #10 — Validate AI response
 
 **Descripción**
 
@@ -287,15 +287,15 @@ POST /api/v1/json/explain
 
 # 📌 EPIC 4 — Backend quality (nivel entrevista)
 
-## 🟢 Issue #11 — Error handling
+## Issue #11 — Error handling
 
 Manejo global de errores
 
-## 🟢 Issue #12 — Logging
+## Issue #12 — Logging
 
 Logs básicos
 
-## 🟢 Issue #13 — Input size limits
+## Issue #13 — Input size limits
 
 Evitar JSON enormes
 
