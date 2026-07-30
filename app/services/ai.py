@@ -4,11 +4,21 @@ import json
 from groq import Groq
 from app.core.config import settings
 
-#client = OpenAI(api_key=settings.openai_api_key)
-client = Groq(api_key=settings.groq_api_key.get_secret_value())
-
 MAX_JSON_SIZE_BYTES = 5000
 MAX_JSON_SIZE_CHARS = 10000
+
+_client: Groq | None = None
+
+def get_client() -> Groq:
+    """
+    Crea el cliente de Groq la primera vez que se necesita (lazy).        
+    """
+    global _client
+    if _client is None:
+        if settings.groq_api_key is None:
+            raise ValueError("GROQ_API_KEY no está configurada en el entorno (.env)")
+        _client = Groq(api_key=settings.groq_api_key.get_secret_value())
+    return _client
 
 def explain_json(data: dict) -> str:
     json_str = json.dumps(data, indent=2, ensure_ascii=False)  
@@ -33,10 +43,11 @@ JSON:
 {json_str}
 """
     try:
+        client = get_client()
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": "Eres un asisten técnico espezializado en JSON"},
+                {"role": "system", "content": "Eres un asisten técnico especializado en JSON"},
                 {"role": "user", "content": prompt}
             ],
             temperature = 0.3,
