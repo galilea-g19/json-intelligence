@@ -31,13 +31,14 @@ def explain_json(data: dict) -> str:
     prompt = f"""
 Eres un asistente experto en explicar estructuras de datos JSON.
 
-A continuación se muestra un objeto JSON. Por favor, explica de forma clara y concisa:
+A continuación se muestra un objeto JSON. Explica de forma clara y concisa siguiente los siguientes puntos:
 - Cuál es la estructura general (objeto principal, anidaciones).
+- Cuantas anidaciones existen?
 - Qué tipo de datos contiene (cadenas, números, booleanos, arreglos, objetos anidados).
 - Si hay arreglos, indica qué tipo de elementos contienen.
 - Si hay campos que parecen importantes, menciónalos.
 
-Devuelve la respuesta en texto plano, con viñetas o párrafos cortos. No incluyas código JSON en la respuesta.
+Devuelve la respuesta en texto plano, con viñetas o párrafos cortos. La respuesta debe estar estructurada y clara
 
 JSON:
 {json_str}
