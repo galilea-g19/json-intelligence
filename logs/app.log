@@ -310,3 +310,32 @@ Algunos campos que parecen importantes son:
 2026-07-30 22:21:26 - httpcore.connection - DEBUG - close.started
 2026-07-30 22:21:26 - httpcore.connection - DEBUG - close.complete
 2026-07-30 22:22:04 - asyncio - DEBUG - Using proactor: IocpProactor
+2026-08-05 12:17:58 - app.main - INFO - Application startup complete. Ready to accept requests.
+2026-08-05 16:10:07 - app.main - INFO - Application shutting down.
+2026-08-05 16:10:17 - app.main - INFO - Application startup complete. Ready to accept requests.
+2026-08-05 16:10:24 - app.main - INFO - Application shutting down.
+2026-08-05 16:10:30 - app.main - INFO - Application startup complete. Ready to accept requests.
+2026-08-05 16:15:50 - app.main - INFO - Application shutting down.
+2026-08-05 16:15:52 - app.main - INFO - Application startup complete. Ready to accept requests.
+2026-08-05 16:15:59 - app.main - INFO - Application shutting down.
+2026-08-05 16:16:01 - app.main - INFO - Application startup complete. Ready to accept requests.
+2026-08-05 16:16:16 - asyncio - DEBUG - Using proactor: IocpProactor
+2026-08-05 16:16:16 - httpcore.connection - DEBUG - connect_tcp.started host='api.groq.com' port=443 local_address=None timeout=5.0 socket_options=None
+2026-08-05 16:16:16 - httpcore.connection - DEBUG - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x000001E59146C1A0>
+2026-08-05 16:16:16 - httpcore.connection - DEBUG - start_tls.started ssl_context=<ssl.SSLContext object at 0x000001E58FF35B50> server_hostname='api.groq.com' timeout=5.0
+2026-08-05 16:16:16 - httpcore.connection - DEBUG - start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x000001E5913F96D0>
+2026-08-05 16:16:16 - httpcore.http11 - DEBUG - send_request_headers.started request=<Request [b'POST']>
+2026-08-05 16:16:16 - httpcore.http11 - DEBUG - send_request_headers.complete
+2026-08-05 16:16:16 - httpcore.http11 - DEBUG - send_request_body.started request=<Request [b'POST']>
+2026-08-05 16:16:16 - httpcore.http11 - DEBUG - send_request_body.complete
+2026-08-05 16:16:16 - httpcore.http11 - DEBUG - receive_response_headers.started request=<Request [b'POST']>
+2026-08-05 16:16:17 - httpcore.http11 - DEBUG - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Wed, 05 Aug 2026 22:16:17 GMT'), (b'Content-Type', b'application/json'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Cache-Control', b'private, max-age=0, no-store, no-cache, must-revalidate'), (b'Server', b'cloudflare'), (b'vary', b'Origin'), (b'x-groq-region', b'msp'), (b'x-ratelimit-limit-requests', b'1000'), (b'x-ratelimit-limit-tokens', b'12000'), (b'x-ratelimit-remaining-requests', b'999'), (b'x-ratelimit-remaining-tokens', b'11184'), (b'x-ratelimit-reset-requests', b'1m26.4s'), (b'x-ratelimit-reset-tokens', b'4.08s'), (b'x-request-id', b'req_01kz9zzbxweyjsg51zs4sn91hv'), (b'cf-cache-status', b'DYNAMIC'), (b'set-cookie', b'__cf_bm=dXIzDMIxfZhbIbR9ccSIJaQ79anbQUa0g8O3En14mIs-1785968177.046095-1.0.1.1-0ZezjHbrP6CWtMGP41um2auEKo9t59JpaBCv4fbcssyx2tblDj5khJwj8JBeqZx4r19bfH9bUQRUatkhAjzXeQ1B.ogqRbI3fkrfGiTOFV1lexsHoyQvK3zblHDf_NIN; HttpOnly; SameSite=None; Secure; Path=/; Domain=groq.com; Expires=Wed, 05 Aug 2026 22:46:17 GMT'), (b'Strict-Transport-Security', b'max-age=15552000'), (b'Content-Encoding', b'gzip'), (b'CF-RAY', b'a2692a528a16637c-DFW'), (b'alt-svc', b'h3=":443"; ma=86400')])
+2026-08-05 16:16:17 - httpcore.http11 - DEBUG - receive_response_body.started request=<Request [b'POST']>
+2026-08-05 16:16:17 - httpcore.http11 - DEBUG - receive_response_body.complete
+2026-08-05 16:16:17 - httpcore.http11 - DEBUG - response_closed.started
+2026-08-05 16:16:17 - httpcore.http11 - DEBUG - response_closed.complete
+2026-08-05 16:16:17 - app.routes.json_routes - INFO - Explanation successful. Nesting levels: 3
+2026-08-05 16:16:17 - asyncio - DEBUG - Using proactor: IocpProactor
+2026-08-05 16:16:17 - asyncio - DEBUG - Using proactor: IocpProactor
+2026-08-05 16:16:17 - httpcore.connection - DEBUG - close.started
+2026-08-05 16:16:17 - httpcore.connection - DEBUG - close.complete

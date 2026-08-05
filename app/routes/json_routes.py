@@ -40,10 +40,10 @@ async def explain_json_endpoint(payload: JsonInput):
     Receive a JSON, send it to Groq and return a explination in natural language
     """
     try:
-        data = payload.data 
+        data = payload.data
         explanation = explain_json(data)
 
-        logger.info(f"Explanation successful. Response form AI: {explanation}")
+        logger.info(f"Explanation successful. Nesting levels: {explanation.nesting_levels}")
         return ExplainResponse(explanation=explanation)
 
     except ValueError as ve:

@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Dict, Any, List, Optional
 
 class AnalysisResponse(BaseModel):
     """ Response from endpoint /analyze """
@@ -8,17 +8,24 @@ class AnalysisResponse(BaseModel):
     nested_structure: Dict[str, Any]
 
 class SchemaResponse(BaseModel):
-    """ Response from endpoint / schema """
-    schema: Dict[str, Any]
+    """ Response from endpoint /schema """
+    model_config = ConfigDict(populate_by_name=True)
+    # El campo interno se llama `json_schema` para no chocar con BaseModel.schema(),
+    # pero entra y sale en el JSON como "schema" gracias al alias.
+    json_schema: Dict[str, Any] = Field(..., alias="schema")
+
+class JsonExplanation(BaseModel):
+    """ Structured, validated explanation produced by the AI. """
+    summary: str = Field(..., description="Explicación legible en lenguaje natural")
+    nesting_levels: int = Field(..., ge=0, description="Cantidad de niveles de anidación detectados")
+    data_types: List[str] = Field(default_factory=list, description="Tipos de datos presentes en el JSON")
+    important_fields: List[str] = Field(default_factory=list, description="Campos que parecen relevantes")
 
 class ExplainResponse(BaseModel):
-    """ Response from endpoint /explain (With AI)"""
-    explanation: str
+    """ Response from endpoint /explain (with AI). """
+    explanation: JsonExplanation
 
 class ErrorResponse(BaseModel):
-    """ Standar response for errors """
+    """ Standard response for errors """
     error: str
     details: Optional[str] = None
-
-class ExplainResponse(BaseModel):
-    explanation: str
