@@ -37,17 +37,13 @@ async def generate_json_schema(payload: JsonInput):
 @router.post("/explain", response_model=ExplainResponse)
 async def explain_json_endpoint(payload: JsonInput):
     """
-    Receive a JSON, send it to Groq and return a explination in natural language
+    Receive a JSON, send it to Groq and return a structured explanation.
+
+    Errors (PayloadTooLargeError -> 413, AIResponseError -> 502) are handled by
+    the global exception handlers registered in app.core.exceptions.
     """
-    try:
-        data = payload.data
-        explanation = explain_json(data)
+    data = payload.data
+    explanation = explain_json(data)
 
-        logger.info(f"Explanation successful. Nesting levels: {explanation.nesting_levels}")
-        return ExplainResponse(explanation=explanation)
-
-    except ValueError as ve:
-        raise HTTPException(status_code=413, detail= str(ve))
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {e}")
+    logger.info(f"Explanation successful. Nesting levels: {explanation.nesting_levels}")
+    return ExplainResponse(explanation=explanation)

@@ -1,23 +1,37 @@
-from fastapi import Request, HTTPException
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+from app.core.config import settings
 
-MAX_BODY_SIZE = 1 * 1024 * 1024  # 1 MB
 
 class BodySizeLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        max_size = settings.max_body_bytes
+
+        def too_large() -> JSONResponse:
+            # Return the response directly: an exception raised inside a
+            # BaseHTTPMiddleware does NOT go through the global exception handlers.
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "error": f"Request body too large. Max {max_size} bytes allowed.",
+                    "status_code": 413,
+                    "path": request.url.path,
+                },
+            )
+
         content_length = request.headers.get("content-length")
-        if content_length and int(content_length) > MAX_BODY_SIZE:
-            raise HTTPException(status_code=413, detail="Request body too large. Max 1 MB allowed.")
-        
-        # Si no hay content-length, leemos el body y verificamos
+        if content_length and content_length.isdigit() and int(content_length) > max_size:
+            return too_large()
+
+        # If there's no reliable content-length, read the body and check it
         body = await request.body()
-        if len(body) > MAX_BODY_SIZE:
-            raise HTTPException(status_code=413, detail="Request body too large. Max 1 MB allowed.")
-        
+        if len(body) > max_size:
+            return too_large()
+
         # Re-build the request so that the endpoints can read it again
         async def receive():
             return {"type": "http.request", "body": body}
         request._receive = receive
-        
-        response = await call_next(request)
-        return response
+
+        return await call_next(request)

@@ -2,7 +2,7 @@ from typing import Dict, Any
 
 def analyze_json(data: Dict[str, Any], parent_key: str = "") -> Dict[str, Any]:
     """
-    Analiza recursivamente un JSON, soportando objetos anidados.
+    Recursively analyze a JSON, supporting nested objects.
     """
     summary = {
         "total_keys_recursive": 0,

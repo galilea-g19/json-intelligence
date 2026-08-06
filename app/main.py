@@ -7,6 +7,7 @@ from app.routes.json_routes import router
 from app.core.exceptions import register_error_handlers
 from app.core.logging import setup_logging
 from app.middleware.size_limit import BodySizeLimitMiddleware
+from app.middleware.request_logging import RequestLoggingMiddleware
 
 load_dotenv()
 setup_logging()
@@ -14,10 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 app = FastAPI()
-# Handler errors
+# Global error handlers
 register_error_handlers(app)
-# Middleware for limit size of the Json
+# Middleware to limit the request body size
 app.add_middleware(BodySizeLimitMiddleware)
+# Request logging (added last -> outermost middleware, logs everything)
+app.add_middleware(RequestLoggingMiddleware)
 
 print(f"Valor de la key: {os.getenv('OPENAI_API_KEY')}")
 

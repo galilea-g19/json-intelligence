@@ -14,11 +14,11 @@ def _get_unique_types(values: list) -> list:
     return schemas
 
 def _get_type_schema(value: Any, field_name: str) -> Dict[str, Any]:
-    """Retorna el fragmento de schema para un valor dado."""
+    """Return the schema fragment for a given value."""
     value_type = type(value).__name__
 
     if isinstance(value, dict):
-        # Objeto anidado: recursión
+        # Nested object: recursion
         return {
             "type": "object",
             "properties": {k: _get_type_schema(v, k) for k, v in value.items()},

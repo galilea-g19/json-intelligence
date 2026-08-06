@@ -10,8 +10,8 @@ class AnalysisResponse(BaseModel):
 class SchemaResponse(BaseModel):
     """ Response from endpoint /schema """
     model_config = ConfigDict(populate_by_name=True)
-    # El campo interno se llama `json_schema` para no chocar con BaseModel.schema(),
-    # pero entra y sale en el JSON como "schema" gracias al alias.
+    # The internal field is named `json_schema` to avoid clashing with
+    # BaseModel.schema(), but it maps to "schema" in the JSON via the alias.
     json_schema: Dict[str, Any] = Field(..., alias="schema")
 
 class JsonExplanation(BaseModel):

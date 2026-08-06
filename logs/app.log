@@ -339,3 +339,31 @@ Algunos campos que parecen importantes son:
 2026-08-05 16:16:17 - asyncio - DEBUG - Using proactor: IocpProactor
 2026-08-05 16:16:17 - httpcore.connection - DEBUG - close.started
 2026-08-05 16:16:17 - httpcore.connection - DEBUG - close.complete
+2026-08-05 21:18:59 - asyncio - DEBUG - Using proactor: IocpProactor
+2026-08-05 21:18:59 - app.request - INFO - POST /api/v1/json/explain -> 413 (2 ms)
+2026-08-05 21:18:59 - asyncio - DEBUG - Using proactor: IocpProactor
+2026-08-05 21:18:59 - app.request - INFO - POST /api/v1/json/analyze -> 413 (0 ms)
+2026-08-05 21:18:59 - asyncio - DEBUG - Using proactor: IocpProactor
+2026-08-05 21:18:59 - httpcore.connection - DEBUG - connect_tcp.started host='api.groq.com' port=443 local_address=None timeout=5.0 socket_options=None
+2026-08-05 21:18:59 - httpcore.connection - DEBUG - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x000001C7B71AABA0>
+2026-08-05 21:18:59 - httpcore.connection - DEBUG - start_tls.started ssl_context=<ssl.SSLContext object at 0x000001C7B71E9B50> server_hostname='api.groq.com' timeout=5.0
+2026-08-05 21:18:59 - httpcore.connection - DEBUG - start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x000001C7B84C1A90>
+2026-08-05 21:18:59 - httpcore.http11 - DEBUG - send_request_headers.started request=<Request [b'POST']>
+2026-08-05 21:18:59 - httpcore.http11 - DEBUG - send_request_headers.complete
+2026-08-05 21:18:59 - httpcore.http11 - DEBUG - send_request_body.started request=<Request [b'POST']>
+2026-08-05 21:18:59 - httpcore.http11 - DEBUG - send_request_body.complete
+2026-08-05 21:18:59 - httpcore.http11 - DEBUG - receive_response_headers.started request=<Request [b'POST']>
+2026-08-05 21:19:00 - httpcore.http11 - DEBUG - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Thu, 06 Aug 2026 03:19:00 GMT'), (b'Content-Type', b'application/json'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Cache-Control', b'private, max-age=0, no-store, no-cache, must-revalidate'), (b'Server', b'cloudflare'), (b'vary', b'Origin'), (b'x-groq-region', b'msp'), (b'x-ratelimit-limit-requests', b'1000'), (b'x-ratelimit-limit-tokens', b'12000'), (b'x-ratelimit-remaining-requests', b'999'), (b'x-ratelimit-remaining-tokens', b'11220'), (b'x-ratelimit-reset-requests', b'1m26.4s'), (b'x-ratelimit-reset-tokens', b'3.9s'), (b'x-request-id', b'req_01kzah9nbcewbr86c0f0k4zjm8'), (b'cf-cache-status', b'DYNAMIC'), (b'set-cookie', b'__cf_bm=JMOlw0Cbh9P6AnN47irmT11M4JPVs3uLVg6DzXUmcaY-1785986340.162506-1.0.1.1-Cwe0N2baFf730IgjgFUQyc5cmIs.dom2CbVirwHH7xOvpAesEEWwX7kVMi_D46KVcCphMQO7lxhOkbFKmJX5G_x9MiJOgOs2yyRS.Z2APxz9A6SxIZxN3OJAfBqcnsY0; HttpOnly; SameSite=None; Secure; Path=/; Domain=groq.com; Expires=Thu, 06 Aug 2026 03:49:00 GMT'), (b'Strict-Transport-Security', b'max-age=15552000'), (b'Content-Encoding', b'gzip'), (b'CF-RAY', b'a26ae5c1fc647d57-DFW'), (b'alt-svc', b'h3=":443"; ma=86400')])
+2026-08-05 21:19:00 - httpcore.http11 - DEBUG - receive_response_body.started request=<Request [b'POST']>
+2026-08-05 21:19:00 - httpcore.http11 - DEBUG - receive_response_body.complete
+2026-08-05 21:19:00 - httpcore.http11 - DEBUG - response_closed.started
+2026-08-05 21:19:00 - httpcore.http11 - DEBUG - response_closed.complete
+2026-08-05 21:19:00 - app.routes.json_routes - INFO - Explanation successful. Nesting levels: 2
+2026-08-05 21:19:00 - app.request - INFO - POST /api/v1/json/explain -> 200 (921 ms)
+2026-08-05 21:19:00 - asyncio - DEBUG - Using proactor: IocpProactor
+2026-08-05 21:19:00 - app.routes.json_routes - INFO - Analysis successful. Total keys: 1
+2026-08-05 21:19:00 - app.request - INFO - POST /api/v1/json/analyze -> 200 (1 ms)
+2026-08-05 21:19:00 - httpcore.connection - DEBUG - close.started
+2026-08-05 21:19:00 - httpcore.connection - DEBUG - close.complete
+2026-08-05 21:19:21 - asyncio - DEBUG - Using proactor: IocpProactor
+2026-08-05 21:19:21 - app.request - INFO - POST /api/v1/json/explain -> 502 (2 ms)

@@ -3,8 +3,43 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+
+class AppError(Exception):
+    """Base application error. Carries its own HTTP status and message."""
+    status_code = 500
+    message = "Internal server error"
+
+    def __init__(self, message: str | None = None):
+        if message:
+            self.message = message
+        super().__init__(self.message)
+
+
+class PayloadTooLargeError(AppError):
+    """The input JSON exceeds the allowed limit."""
+    status_code = 413
+    message = "Payload too large"
+
+
+class AIResponseError(AppError):
+    """The AI failed or returned a response that doesn't match the expected format."""
+    status_code = 502
+    message = "AI response error"
+
+
 def register_error_handlers(app: FastAPI):
-    """Registra manejadores de errores globales en la aplicación FastAPI."""
+    """Register global error handlers on the FastAPI application."""
+
+    @app.exception_handler(AppError)
+    async def app_error_handler(request: Request, exc: AppError):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": exc.message,
+                "status_code": exc.status_code,
+                "path": request.url.path,
+            },
+        )
 
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
