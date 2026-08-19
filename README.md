@@ -301,7 +301,16 @@ Evitar JSON enormes
 
 # 📌 EPIC 5 — Minimal UI (solo demo)
 
-## 🟡 Issue #14 — Create simple UI page
+> **Implementado.** UI en `app/static/` (`index.html` + `styles.css` + `app.js`),
+> servida por la propia API en **http://127.0.0.1:8000/ui/**.
+>
+> Al servirse desde el mismo origen que la API, los `fetch` no necesitan CORS.
+>
+> ```bash
+> uvicorn app.main:app --reload   # UI: /ui/   ·   Swagger: /docs
+> ```
+
+## Issue #14 — Create simple UI page
 
 **Descripción**
 
@@ -315,14 +324,14 @@ UI básica (puede ser HTML simple)
   - Schema
   - Explain
 
-## 🟡 Issue #15 — Connect UI to API
+## Issue #15 — Connect UI to API
 
 **Tareas**
 
 - fetch a endpoints
 - mostrar resultados
 
-## 🟡 Issue #16 — Basic styling
+## Issue #16 — Basic styling
 
 **Descripción**
 

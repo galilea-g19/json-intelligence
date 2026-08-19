@@ -1,7 +1,10 @@
 import os
 import logging
+from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.routes.json_routes import router
 from app.core.exceptions import register_error_handlers
@@ -26,7 +29,13 @@ print(f"Valor de la key: {os.getenv('OPENAI_API_KEY')}")
 
 @app.get("/")
 def read_root():
-    return {"message": "¡Hola, FastAPI está funcionando!"}
+    return {"message": "¡Hola, FastAPI está funcionando!", "ui": "/ui", "docs": "/docs"}
+
+
+@app.get("/ui", include_in_schema=False)
+def ui_index():
+    """Convenience redirect so /ui resolves the demo UI with its relative assets."""
+    return RedirectResponse(url="/ui/")
 
 @app.get("/test-env")
 def test_env():
@@ -45,3 +54,8 @@ async def shutdown_event():
     logger.info("Application shutting down.")
 
 app.include_router(router, prefix="/api/v1/json")
+
+# Minimal demo UI (EPIC 5). Served by the API itself so the fetch calls
+# in app/static/app.js are same-origin and need no CORS configuration.
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/ui", StaticFiles(directory=STATIC_DIR, html=True), name="ui")
