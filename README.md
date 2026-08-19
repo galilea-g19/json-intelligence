@@ -1,385 +1,313 @@
-# json-intelligence
+# JSON Intelligence API
 
-API to parse and transform JSON, combining deterministic logic with AI to generate structured explanations and schemas.
+**A backend-focused developer tool that analyzes, explains and transforms JSON structures — combining deterministic logic with AI-assisted processing.**
 
-- OpenAI API _(or compatible LLM provider)_
-
-### Frontend (minimal demo UI)
-
-- HTML/CSS/JavaScript or lightweight frontend layer
-
-# Example Features
-
-### Analyze JSON
-
-Returns:
-
-- key count
-- type detection
-- nested structure analysis
-
-### Generate Schema
-
-Creates a valid JSON Schema automatically from input data.
-
-### Explain JSON (AI)
-
-Uses AI to generate human-readable explanations of structured data.
-
-# Long-Term Vision
-
-Potential future improvements include:
-
-- authentication
-- saved analyses
-- schema export
-- advanced transformations
-- AI-powered recommendations
-- SDK/package integration
-- SaaS version for teams and developers
-
-### Dev mood
-
-> uvicorn app.main:app --reload
-
-**JSON Intelligence API** is a backend-focused developer tool designed to analyze, explain, and transform JSON structures through a combination of deterministic logic and AI-assisted processing.
-
-The project was created as part of a personal initiative to build practical tools for developers while strengthening backend engineering and AI integration skills.
-
-# What does it do?
-
-The system allows developers to:
-
-- Analyze JSON structures dynamically
-- Detect data types and nested relationships
-- Generate JSON Schema automatically
-- Explain JSON structures using AI
-- Validate and process structured data through a clean API
-
-A lightweight interactive UI is included for demonstration purposes, but the core of the project is the backend architecture and API design.
-
-# Main Goals
-
-- Practice backend-focused architecture using Python and FastAPI
-- Explore AI integration in real-world developer tooling
-- Design scalable and structured APIs
-- Build a portfolio project that demonstrates:
-  - data processing
-  - API design
-  - validation
-  - AI-assisted workflows
-  - clean backend organization
-
-# Tech Stack
-
-### Backend
-
-- Python
-- FastAPI
-- Pydantic
-- Uvicorn
-
-### AI Integration
-
-- OpenAI API _(or compatible LLM provider)_
-
-### Frontend (minimal demo UI)
-
-- HTML/CSS/JavaScript or lightweight frontend layer
-
-# Example Features
-
-### Analyze JSON
-
-Returns:
-
-- key count
-- type detection
-- nested structure analysis
-
-### Generate Schema
-
-Creates a valid JSON Schema automatically from input data.
-
-### Explain JSON (AI)
-
-Uses AI to generate human-readable explanations of structured data.
-
-# Why this project matters
-
-This project is not intended to be just another JSON viewer.
-
-It is designed to demonstrate:
-
-- backend problem-solving
-- API-first thinking
-- structured AI integration
-- developer tooling concepts
-- scalable service design
+FastAPI · Pydantic · Groq (LLM) · vanilla JS demo UI
 
 ---
 
-# Long-Term Vision
+## The problem
 
-Potential future improvements include:
+JSON is the format every backend speaks, but understanding an unfamiliar payload is still manual work: counting keys, tracing nested paths, writing a schema by hand, and explaining the shape to whoever consumes the API.
 
-- authentication
-- saved analyses
-- schema export
-- advanced transformations
-- AI-powered recommendations
-- SDK/package integration
-- SaaS version for teams and developers
+Generic online JSON viewers pretty-print the data and stop there. They don't tell you *what the structure is*, and pasting production-shaped payloads into a random website isn't something you want to make a habit of.
 
-# 📌 EPIC 1 — Setup backend (FastAPI)
+## The solution
 
-## Issue #1 — Initialize FastAPI project
+One API that answers three different questions about the same payload:
 
-**Descripción**
+| Question | Endpoint | How it's answered |
+| --- | --- | --- |
+| *What's in here?* | `POST /api/v1/json/analyze` | Deterministic recursive walk |
+| *What contract does it follow?* | `POST /api/v1/json/schema` | Deterministic draft-07 inference |
+| *What does it mean?* | `POST /api/v1/json/explain` | LLM, with the answer validated by Pydantic |
 
-Crear base del proyecto en Python
+The split is the point: **anything that can be computed is computed.** The model is only asked for the part that genuinely needs language, and even then its output has to satisfy a Pydantic model before it reaches the client.
 
-**Tareas**
+A minimal UI is bundled for demos, but the core of the project is the API design.
 
-- Crear entorno virtual
-- Instalar:
-  - fastapi
-  - uvicorn
-- Crear estructura:
+![Endpoints](https://img.shields.io/badge/endpoints-3-4fa3ff) ![Python](https://img.shields.io/badge/python-3.11%2B-4fa3ff) ![License](https://img.shields.io/badge/license-MIT-4fa3ff)
 
-```
-/app
-  main.py
-  /routes
-  /services
-  /models
-```
+---
 
-**DoD**
+## Features
 
-- Server corre con:
+### Analyze JSON
 
-```
-uvicorn app.main:app--reload
-```
+Recursive walk over the object. Returns the total key count, the type of every key using **dotted paths** (`user.address.city`, `projects[].name` for objects inside arrays) and a type-only mirror of the structure.
 
-## Issue #2 — Environment configuration
+### Generate Schema
 
-**Descripción**
+Infers a valid **JSON Schema draft-07** from a sample payload: nested objects, arrays with a single item shape (`items`) or mixed shapes (`anyOf`), and `required` derived from the keys present.
 
-Manejo de variables de entorno
+### Explain JSON (AI)
 
-**Tareas**
+Sends the payload to the LLM and returns a **structured** explanation — not a blob of prose: `summary`, `nesting_levels`, `data_types[]` and `important_fields[]`, validated with Pydantic before returning.
 
-- Instalar `python-dotenv`
-- Crear `.env`
-- Variables:
-  - OPENAI_API_KEY
-- Cargar config en app
+### Demo UI
 
-**DoD**
+Split-pane page at `/ui/`: editor on the left with live JSON validation and a byte counter, tabbed results on the right, one button per endpoint.
 
-- App lee variables correctamente
+---
 
-## Issue #3 — Request validation with Pydantic
+## Running locally (development)
 
-**Descripción**
+### Requirements
 
-Validar inputs de la API
+- **Python 3.11+** (developed on 3.14)
+- A **Groq API key** — free at [console.groq.com](https://console.groq.com/keys). Only needed for `/explain`; `/analyze` and `/schema` run offline.
 
-**Tareas**
+### 1. Clone and enter the project
 
-- Crear modelo base:
-
-```
-classJsonInput(BaseModel):json:dict
+```bash
+git clone <repo-url>
+cd json-intelligence
 ```
 
-**DoD**
+### 2. Create the virtual environment
 
-- Requests inválidos fallan correctamente
-
-# 📌 EPIC 2 — Core JSON Logic
-
-## Issue #4 — Implement JSON analyzer service
-
-**Descripción**
-
-Analizar estructura del JSON
-
-**Tareas**
-
-- Contar keys
-- Detectar tipos
-- Soportar nested objects
-
-**DoD**
-
-- Función devuelve:
-  - resumen
-  - estructura
-
-## Issue #5 — Create `/analyze` endpoint
-
-**Descripción**
-
-```
-POST /api/v1/json/analyze
+```bash
+python -m venv .venv
 ```
 
-**DoD**
+Activate it:
 
-- Endpoint funcional con respuesta clara
+| Shell | Command |
+| --- | --- |
+| PowerShell | `.venv\Scripts\Activate.ps1` |
+| CMD | `.venv\Scripts\activate.bat` |
+| Git Bash / WSL / macOS / Linux | `source .venv/bin/activate` (Windows: `source .venv/Scripts/activate`) |
 
-## Issue #6 — Implement schema generator
+### 3. Install dependencies
 
-**Descripción**
-
-Generar JSON Schema
-
-**Tareas**
-
-- Mapear tipos
-- Detectar required fields
-- Soportar nested
-
-## Issue #7 — Create `/schema` endpoint
-
-**DoD**
-
-- Endpoint responde correctamente
-
-# 📌 EPIC 3 — AI Integration
-
-## Issue #8 — Setup AI service
-
-**Descripción**
-
-Servicio para llamadas a AI
-
-**Tareas**
-
-- Crear `ai_service.py`
-- Función:
-  - recibe JSON
-  - retorna explicación estructurada
-
-## Issue #9 — Implement `/explain` endpoint
-
-```
-POST /api/v1/json/explain
+```bash
+pip install -r requirements.txt
 ```
 
-**Tareas**
+### 4. Configure the environment
 
-- Prompt estructurado
-- Limitar tamaño JSON
+Create a `.env` file in the project root:
 
-**DoD**
+```env
+GROQ_API_KEY=gsk_your_key_here
+```
 
-- Output consistente
+Optional overrides (defaults shown):
 
-## Issue #10 — Validate AI response
+```env
+MAX_BODY_BYTES=1048576      # 1 MB — max size of any request body
+MAX_AI_JSON_BYTES=5000      # max size of the JSON forwarded to the LLM
+MAX_AI_JSON_CHARS=10000     # same limit, counted in characters
+```
 
-**Descripción**
+`.env` is git-ignored. Nothing else needs configuring — there is no database.
 
-- Validar output con Pydantic
+### 5. Run the server
 
-# 📌 EPIC 4 — Backend quality (nivel entrevista)
+```bash
+uvicorn app.main:app --reload
+```
 
-## Issue #11 — Error handling
+`--reload` restarts the server on every file change; drop it for a production-like run.
 
-Manejo global de errores
+### 6. Open it
 
-## Issue #12 — Logging
+| What | URL |
+| --- | --- |
+| **Demo UI** | <http://127.0.0.1:8000/ui/> |
+| **Swagger UI** | <http://127.0.0.1:8000/docs> |
+| **ReDoc** | <http://127.0.0.1:8000/redoc> |
+| **OpenAPI schema** | <http://127.0.0.1:8000/openapi.json> |
+| Health check | <http://127.0.0.1:8000/> |
+| Key check | <http://127.0.0.1:8000/test-env> |
 
-Logs básicos
+### 7. Smoke-test from the terminal
 
-## Issue #13 — Input size limits
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/json/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"data":{"name":"Galilea","skills":["Python","FastAPI"]}}'
+```
 
-Evitar JSON enormes
+Requests and responses are logged to stdout and to `logs/app.log`:
 
-# 📌 EPIC 5 — Minimal UI (solo demo)
+```
+2026-08-18 19:22:31 - app.request - INFO - POST /api/v1/json/analyze -> 200 (4 ms)
+```
 
-> **Implementado.** UI en `app/static/` (`index.html` + `styles.css` + `app.js`),
-> servida por la propia API en **http://127.0.0.1:8000/ui/**.
->
-> Al servirse desde el mismo origen que la API, los `fetch` no necesitan CORS.
->
-> ```bash
-> uvicorn app.main:app --reload   # UI: /ui/   ·   Swagger: /docs
-> ```
+### Troubleshooting
 
-## Issue #14 — Create simple UI page
+| Symptom | Cause / fix |
+| --- | --- |
+| `ModuleNotFoundError: No module named 'app'` | Run `uvicorn` from the project root, not from `app/` |
+| UI shows **API offline** | The server isn't running, or you opened `index.html` from disk instead of `/ui/` |
+| `/explain` returns **502** | `GROQ_API_KEY` missing/invalid, or the configured model is unavailable for your account (`app/services/ai.py`) |
+| `/explain` returns **413** | The payload is over `MAX_AI_JSON_BYTES` — the LLM limit is deliberately stricter than the HTTP one |
+| Port already in use | `uvicorn app.main:app --port 8001` |
 
-**Descripción**
+---
 
-UI básica (puede ser HTML simple)
+## API reference
 
-**Tareas**
+Base URL: `http://127.0.0.1:8000/api/v1/json`
 
-- Textarea
-- Botones:
-  - Analyze
-  - Schema
-  - Explain
+Every endpoint takes the same envelope — a top-level `data` **object** (not an array):
 
-## Issue #15 — Connect UI to API
+```json
+{ "data": { "user": { "name": "Galilea", "age": 30 }, "skills": ["Python"] } }
+```
 
-**Tareas**
+### `POST /analyze`
 
-- fetch a endpoints
-- mostrar resultados
+```json
+{
+  "key_count": 4,
+  "types": {
+    "user": "dict",
+    "user.name": "str",
+    "user.age": "int",
+    "skills": "list"
+  },
+  "nested_structure": {
+    "user": { "name": "str", "age": "int" },
+    "skills": ["str"]
+  }
+}
+```
 
-## Issue #16 — Basic styling
+### `POST /schema`
 
-**Descripción**
+```json
+{
+  "schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "JSONData",
+    "type": "object",
+    "properties": {
+      "user": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "age": { "type": "integer" }
+        },
+        "required": ["name", "age"]
+      },
+      "skills": { "type": "array", "items": { "type": "string" } }
+    },
+    "required": ["user", "skills"]
+  }
+}
+```
 
-- Layout limpio
-- readable JSON output
+### `POST /explain`
 
-# 📌 EPIC 6 — Developer Experience
+```json
+{
+  "explanation": {
+    "summary": "An object describing a user and their skills…",
+    "nesting_levels": 2,
+    "data_types": ["object", "string", "integer", "array"],
+    "important_fields": ["user.name", "skills"]
+  }
+}
+```
 
-## 🟡 Issue #17 — Swagger docs
+### Errors
 
-👉 FastAPI ya lo da (`/docs`)
+Every failure returns the same envelope:
 
-## 🟡 Issue #18 — README profesional
+```json
+{ "error": "Payload too large", "status_code": 413, "path": "/api/v1/json/explain" }
+```
 
-**Descripción**
+| Status | When |
+| --- | --- |
+| `400` | The payload couldn't be processed by the analyzer/generator |
+| `413` | Body over `MAX_BODY_BYTES`, or JSON over the stricter AI limit |
+| `422` | `data` missing, or not a JSON object — includes a `details` array |
+| `502` | The AI call failed or returned a shape that doesn't match `JsonExplanation` |
+| `500` | Unexpected error (details hidden unless the app runs in debug) |
 
-- Problem
-- Solution
-- API endpoints
-- Tech decisions
-- endpoints
-- decisiones técnicas
-- cómo correr proyecto
+---
 
-# 🧠 Orden recomendado (muy importante)
+## Tech stack
 
-NO los hagas en orden lineal.
+| Layer | Choice |
+| --- | --- |
+| API | FastAPI (Starlette + Pydantic v2) |
+| Validation | Pydantic models on both the request and the AI response |
+| AI | Groq (`llama-3.3-70b-versatile`) with JSON mode |
+| Config | `pydantic-settings` + `.env` |
+| Server | Uvicorn |
+| UI | Vanilla HTML/CSS/JS, no build step |
+| Docs | OpenAPI / Swagger UI / ReDoc, generated from the code |
 
-👉 IMPORTANTE:
+---
 
-1. #1–3 → setup
-2. #4–5 → `/analyze` 💥
-3. #6–7 → schema
-4. #8–9 → AI
-5. #14–15 → UI
-6. resto → mejoras
+## Technical decisions
 
-# 🔥 MVP real
+**Deterministic first, AI second.** Key counting, type detection and schema inference are pure Python — reproducible, instant and free. The LLM is reserved for natural language. It also means two thirds of the API keeps working with no API key at all.
 
-Con esto ya puedes aplicar:
+**The AI response is validated like any other input.** `explain_json()` requests JSON mode and then runs `JsonExplanation.model_validate()` on the answer. A model that hallucinates a different shape produces a clean `502`, never a malformed `200`.
 
-- `/analyze`
-- `/schema`
-- `/explain`
-- UI simple
+**Two size limits, not one.** `BodySizeLimitMiddleware` rejects oversized HTTP bodies (1 MB) before they're parsed; a stricter limit (5 KB) guards what gets forwarded to the LLM, where payload size means cost and latency. Both live in `Settings` as a single source of truth.
 
-# 🚀 Cómo presentarlo
+**A single error envelope.** Handlers registered in `app/core/exceptions.py` normalize `AppError`, `HTTPException` and validation errors into `{error, status_code, path}`, so clients — including the bundled UI — parse one shape.
 
-- demo con UI
-- explicar endpoints
-- mencionar decisiones técnicas
+**Errors as domain exceptions.** Services raise `PayloadTooLargeError` / `AIResponseError` and never import FastAPI. HTTP status codes are attached at the boundary, which keeps the services testable and framework-agnostic.
+
+**Middleware ordering is intentional.** Request logging is added last so it wraps everything, including rejections from the size limit — a request refused with 413 still shows up in the log.
+
+**The UI is served by the API.** Static files are mounted at `/ui`, so the demo's `fetch` calls are same-origin and the project needs no CORS configuration to be demoable.
+
+**Versioned routes from day one.** Everything lives under `/api/v1/json`, so a v2 can coexist rather than break clients.
+
+---
+
+## Project structure
+
+```
+json-intelligence/
+├── app/
+│   ├── main.py                     # App factory, OpenAPI metadata, meta routes, /ui mount
+│   ├── core/
+│   │   ├── config.py               # Settings (.env) — keys and size limits
+│   │   ├── exceptions.py           # Domain errors + global handlers
+│   │   └── logging.py              # Console + file logging setup
+│   ├── middleware/
+│   │   ├── size_limit.py           # Rejects bodies over the limit (413)
+│   │   └── request_logging.py      # method, path, status, duration
+│   ├── models/
+│   │   ├── request_models.py       # JsonInput
+│   │   └── response_models.py      # Analysis / Schema / Explain / Error
+│   ├── routes/
+│   │   └── json_routes.py          # /analyze, /schema, /explain
+│   ├── services/
+│   │   ├── analyzer.py             # Recursive structure analysis
+│   │   ├── schema_generator.py     # JSON Schema draft-07 inference
+│   │   └── ai.py                   # Groq client, prompt, response validation
+│   └── static/                     # Demo UI (index.html, styles.css, app.js)
+├── docs/BACKLOG.md                 # Epics and issues this project was built from
+├── logs/app.log                    # Runtime log (created on first run)
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## Roadmap
+
+- Automated test suite (`pytest` + `httpx`) over the three endpoints and the error envelope
+- Docker image for one-command runs
+- Schema export (download `.json`) from the UI
+- Rate limiting and authentication
+- Saved analyses and history
+- Advanced transformations and AI-powered recommendations
+
+---
+
+## Author
+
+Built by **Galilea Granados**. Backend architecture, API design and structured AI integration.
+
+License: MIT

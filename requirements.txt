@@ -1,0 +1,9 @@
+# Runtime dependencies — pinned to the versions this project was developed with.
+# Install with:  pip install -r requirements.txt
+
+fastapi==0.136.1
+uvicorn[standard]==0.46.0
+pydantic==2.13.4
+pydantic-settings==2.14.1
+python-dotenv==1.2.2
+groq==1.4.0

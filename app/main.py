@@ -1,4 +1,3 @@
-import os
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
@@ -17,7 +16,51 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-app = FastAPI()
+API_DESCRIPTION = """
+Analyze, describe and transform JSON structures through a single API.
+
+Deterministic logic handles what can be computed (**key counting, type detection,
+JSON Schema generation**); an LLM handles what needs language
+(**human-readable explanations**), and its output is validated with Pydantic
+before it ever reaches the client.
+
+### Quick start
+
+1. Try any endpoint below with **Try it out**.
+2. Or open the interactive demo UI at [`/ui/`](/ui/).
+
+All endpoints take the same envelope — a top-level `data` object:
+
+```json
+{ "data": { "name": "Galilea", "skills": ["Python", "FastAPI"] } }
+```
+"""
+
+TAGS_METADATA = [
+    {
+        "name": "json",
+        "description": "Analyze, generate schemas from, and explain JSON payloads.",
+    },
+    {
+        "name": "meta",
+        "description": "Health and environment checks used by the demo UI and by deployments.",
+    },
+]
+
+app = FastAPI(
+    title="JSON Intelligence API",
+    description=API_DESCRIPTION,
+    version="1.0.0",
+    contact={
+        "name": "Galilea Granados",
+        "email": "galileagranados19@gmail.com",
+    },
+    license_info={"name": "MIT"},
+    openapi_tags=TAGS_METADATA,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
 # Global error handlers
 register_error_handlers(app)
 # Middleware to limit the request body size
@@ -25,11 +68,19 @@ app.add_middleware(BodySizeLimitMiddleware)
 # Request logging (added last -> outermost middleware, logs everything)
 app.add_middleware(RequestLoggingMiddleware)
 
-print(f"Valor de la key: {os.getenv('OPENAI_API_KEY')}")
 
-@app.get("/")
+@app.get(
+    "/",
+    tags=["meta"],
+    summary="Health check",
+    description="Liveness probe. Also points to the demo UI and the docs.",
+)
 def read_root():
-    return {"message": "¡Hola, FastAPI está funcionando!", "ui": "/ui", "docs": "/docs"}
+    return {
+        "message": "¡Hola, FastAPI está funcionando!",
+        "ui": "/ui",
+        "docs": "/docs",
+    }
 
 
 @app.get("/ui", include_in_schema=False)
@@ -37,23 +88,40 @@ def ui_index():
     """Convenience redirect so /ui resolves the demo UI with its relative assets."""
     return RedirectResponse(url="/ui/")
 
-@app.get("/test-env")
+
+@app.get(
+    "/test-env",
+    tags=["meta"],
+    summary="Environment check",
+    description=(
+        "Reports whether the AI provider keys are present, without ever "
+        "returning the key itself."
+    ),
+)
 def test_env():
-    key_exists = bool(settings.openai_api_key.get_secret_value())
-    key = os.getenv("OPENAI_API_KEY")
-    if key_exists:
-        return {"status": "Configurada", "preview": f"{key[:5]}..."}
-    return {"status": "No encontrada", "preview": None}
+    def preview(secret) -> dict:
+        if secret is None:
+            return {"status": "No encontrada", "preview": None}
+        value = secret.get_secret_value()
+        return {"status": "Configurada", "preview": f"{value[:5]}..."}
+
+    return {
+        "groq_api_key": preview(settings.groq_api_key),
+        "openai_api_key": preview(settings.openai_api_key),
+    }
+
 
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application startup complete. Ready to accept requests.")
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("Application shutting down.")
 
-app.include_router(router, prefix="/api/v1/json")
+
+app.include_router(router, prefix="/api/v1/json", tags=["json"])
 
 # Minimal demo UI (EPIC 5). Served by the API itself so the fetch calls
 # in app/static/app.js are same-origin and need no CORS configuration.

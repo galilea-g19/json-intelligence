@@ -474,3 +474,26 @@ Algunos campos que parecen importantes son:
 2026-08-18 18:57:40 - app.request - INFO - GET / -> 200 (1 ms)
 2026-08-18 19:10:38 - app.main - INFO - Application startup complete. Ready to accept requests.
 2026-08-18 19:10:43 - app.main - INFO - Application shutting down.
+2026-08-18 19:12:06 - app.main - INFO - Application startup complete. Ready to accept requests.
+2026-08-18 19:12:18 - app.request - INFO - GET / -> 200 (3 ms)
+2026-08-18 19:12:18 - app.request - INFO - GET /ui/ -> 200 (34 ms)
+2026-08-18 19:12:19 - app.request - INFO - GET /app/static -> 404 (1 ms)
+2026-08-18 19:12:19 - app.request - INFO - GET /favicon.ico -> 404 (1 ms)
+2026-08-18 19:12:27 - app.request - INFO - GET /ui/ -> 200 (5 ms)
+2026-08-18 19:12:27 - app.request - INFO - GET /ui/styles.css -> 200 (3 ms)
+2026-08-18 19:12:27 - app.request - INFO - GET /ui/app.js -> 200 (2 ms)
+2026-08-18 19:12:27 - app.request - INFO - GET / -> 200 (1 ms)
+2026-08-18 19:12:27 - app.request - INFO - GET /favicon.ico -> 404 (1 ms)
+2026-08-18 19:12:33 - app.request - INFO - POST /api/v1/json/schema -> 200 (2 ms)
+2026-08-18 19:12:35 - app.routes.json_routes - INFO - Analysis successful. Total keys: 13
+2026-08-18 19:12:35 - app.request - INFO - POST /api/v1/json/analyze -> 200 (2 ms)
+2026-08-18 19:16:02 - app.request - INFO - GET /ui/ -> 304 (2 ms)
+2026-08-18 19:16:02 - app.request - INFO - GET /ui/styles.css -> 304 (2 ms)
+2026-08-18 19:16:02 - app.request - INFO - GET /ui/app.js -> 304 (2 ms)
+2026-08-18 19:16:02 - app.request - INFO - GET / -> 200 (1 ms)
+2026-08-18 19:19:27 - app.request - INFO - GET /docs -> 200 (1 ms)
+2026-08-18 19:19:28 - app.request - INFO - GET /openapi.json -> 200 (20 ms)
+2026-08-18 19:21:35 - app.request - INFO - GET / -> 200 (1 ms)
+2026-08-18 19:21:35 - app.request - INFO - GET /openapi.json -> 200 (1 ms)
+2026-08-18 19:22:06 - app.main - INFO - Application startup complete. Ready to accept requests.
+2026-08-18 19:22:20 - app.request - INFO - GET /openapi.json -> 200 (1 ms)
