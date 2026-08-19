@@ -497,3 +497,16 @@ Algunos campos que parecen importantes son:
 2026-08-18 19:21:35 - app.request - INFO - GET /openapi.json -> 200 (1 ms)
 2026-08-18 19:22:06 - app.main - INFO - Application startup complete. Ready to accept requests.
 2026-08-18 19:22:20 - app.request - INFO - GET /openapi.json -> 200 (1 ms)
+2026-08-18 19:23:21 - app.main - INFO - Application startup complete. Ready to accept requests.
+2026-08-18 19:23:37 - app.request - INFO - GET /test-env -> 200 (3 ms)
+2026-08-18 19:23:37 - app.request - INFO - GET /openapi.json -> 200 (21 ms)
+2026-08-18 19:25:01 - app.routes.json_routes - INFO - Analysis successful. Total keys: 4
+2026-08-18 19:25:01 - app.request - INFO - POST /api/v1/json/analyze -> 200 (2 ms)
+2026-08-18 19:25:22 - app.request - INFO - GET /docs -> 200 (1 ms)
+2026-08-18 19:25:23 - app.request - INFO - GET /openapi.json -> 200 (1 ms)
+2026-08-18 19:25:43 - app.request - INFO - GET / -> 200 (1 ms)
+2026-08-18 19:25:43 - app.request - INFO - GET /ui/ -> 200 (33 ms)
+2026-08-18 19:25:44 - app.request - INFO - GET /docs -> 200 (0 ms)
+2026-08-18 19:25:44 - app.request - INFO - GET /redoc -> 200 (0 ms)
+2026-08-18 19:25:44 - app.request - INFO - GET /openapi.json -> 200 (1 ms)
+2026-08-18 19:25:44 - app.request - INFO - GET /test-env -> 200 (1 ms)

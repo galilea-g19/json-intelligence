@@ -4,12 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>JSON Intelligence — Demo UI</title>
+    <link rel="icon" href="json-intelligence.png" type="image/png" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header class="topbar">
       <div class="brand">
-        <span class="brand-mark">{ }</span>
+        <span class="brand-mark"
+          ><img src="json-intelligence.png" width="10%" alt=""
+        /></span>
         <span class="brand-name">JSON Intelligence</span>
         <span class="brand-sub">demo UI</span>
       </div>
@@ -17,7 +20,14 @@
         <span class="api-status" id="api-status" data-state="checking">
           <i class="dot"></i><span id="api-status-text">checking API…</span>
         </span>
-        <a class="link" id="docs-link" href="/docs" target="_blank" rel="noreferrer">/docs</a>
+        <a
+          class="link"
+          id="docs-link"
+          href="/docs"
+          target="_blank"
+          rel="noreferrer"
+          >/docs</a
+        >
       </div>
     </header>
 
@@ -27,9 +37,15 @@
         <div class="panel-head">
           <h2 class="panel-title">Input JSON</h2>
           <div class="panel-tools">
-            <button class="btn-ghost" type="button" id="btn-sample">Sample</button>
-            <button class="btn-ghost" type="button" id="btn-format">Format</button>
-            <button class="btn-ghost" type="button" id="btn-clear">Clear</button>
+            <button class="btn-ghost" type="button" id="btn-sample">
+              Sample
+            </button>
+            <button class="btn-ghost" type="button" id="btn-format">
+              Format
+            </button>
+            <button class="btn-ghost" type="button" id="btn-clear">
+              Clear
+            </button>
           </div>
         </div>
 
@@ -57,28 +73,68 @@
         </div>
 
         <div class="tabs" role="tablist">
-          <button class="tab is-active" role="tab" type="button" data-tab="analyze" aria-selected="true">Analyze</button>
-          <button class="tab" role="tab" type="button" data-tab="schema" aria-selected="false">Schema</button>
-          <button class="tab" role="tab" type="button" data-tab="explain" aria-selected="false">Explain</button>
+          <button
+            class="tab is-active"
+            role="tab"
+            type="button"
+            data-tab="analyze"
+            aria-selected="true"
+          >
+            Analyze
+          </button>
+          <button
+            class="tab"
+            role="tab"
+            type="button"
+            data-tab="schema"
+            aria-selected="false"
+          >
+            Schema
+          </button>
+          <button
+            class="tab"
+            role="tab"
+            type="button"
+            data-tab="explain"
+            aria-selected="false"
+          >
+            Explain
+          </button>
         </div>
 
         <div class="tab-panels">
           <div class="tab-content" role="tabpanel" data-panel="analyze">
             <div class="state">
               <p class="state-title">Nothing analyzed yet</p>
-              <p class="state-hint">Run <b>Analyze</b> to get key count, detected types and the nested structure.</p>
+              <p class="state-hint">
+                Run <b>Analyze</b> to get key count, detected types and the
+                nested structure.
+              </p>
             </div>
           </div>
-          <div class="tab-content is-hidden" role="tabpanel" data-panel="schema">
+          <div
+            class="tab-content is-hidden"
+            role="tabpanel"
+            data-panel="schema"
+          >
             <div class="state">
               <p class="state-title">No schema generated</p>
-              <p class="state-hint">Run <b>Schema</b> to build a JSON Schema from the input.</p>
+              <p class="state-hint">
+                Run <b>Schema</b> to build a JSON Schema from the input.
+              </p>
             </div>
           </div>
-          <div class="tab-content is-hidden" role="tabpanel" data-panel="explain">
+          <div
+            class="tab-content is-hidden"
+            role="tabpanel"
+            data-panel="explain"
+          >
             <div class="state">
               <p class="state-title">No explanation yet</p>
-              <p class="state-hint">Run <b>Explain</b> to get an AI-generated, structured explanation.</p>
+              <p class="state-hint">
+                Run <b>Explain</b> to get an AI-generated, structured
+                explanation.
+              </p>
             </div>
           </div>
         </div>
@@ -95,7 +151,9 @@
 
     <footer class="footer">
       <span><code>POST /api/v1/json/{analyze|schema|explain}</code></span>
-      <span class="footer-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> runs the active tab</span>
+      <span class="footer-hint"
+        ><kbd>Ctrl</kbd>+<kbd>Enter</kbd> runs the active tab</span
+      >
     </footer>
 
     <script src="./app.js"></script>
