@@ -26,6 +26,13 @@ class ExplainResponse(BaseModel):
     explanation: JsonExplanation
 
 class ErrorResponse(BaseModel):
-    """ Standard response for errors """
+    """ Standard error envelope produced by app.core.exceptions. """
     error: str
-    details: Optional[str] = None
+    status_code: int
+    path: str
+    details: Optional[List[Dict[str, Any]]] = Field(
+        default=None, description="Only on 422: the validation errors"
+    )
+    message: Optional[str] = Field(
+        default=None, description="Only on 500: a generic, user-facing message"
+    )

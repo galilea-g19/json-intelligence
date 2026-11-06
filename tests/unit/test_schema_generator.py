@@ -159,16 +159,83 @@ def test_does_not_mutate_input():
 
 
 # ---------------------------------------------------------------------------
-# Bug / decisión de diseño conocida
+# SC-11: objetos con distinta forma dentro de un arreglo se combinan en uno solo
 # ---------------------------------------------------------------------------
 
-# SC-11
-@pytest.mark.xfail(reason="SC-11: objetos con distinta forma generan entradas separadas en anyOf en vez de unirse")
 def test_objects_with_different_shapes_are_merged():
     data = {"l": [{"n": 1}, {"n": 2, "m": True}]}
 
     assert prop(data, "l")["items"] == {
         "type": "object",
         "properties": {"n": {"type": "integer"}, "m": {"type": "boolean"}},
+        "required": ["n"],  # solo lo que tienen TODOS los objetos
+    }
+
+
+def test_merged_properties_keep_first_appearance_order():
+    data = {"l": [{"b": 1}, {"a": 1, "b": 2}, {"c": 1}]}
+
+    items = prop(data, "l")["items"]
+
+    assert list(items["properties"]) == ["b", "a", "c"]
+    assert items["required"] == []
+
+
+def test_same_key_with_different_types_becomes_anyof():
+    data = {"l": [{"n": 1}, {"n": "1"}]}
+
+    assert prop(data, "l")["items"] == {
+        "type": "object",
+        "properties": {"n": {"anyOf": [{"type": "integer"}, {"type": "string"}]}},
         "required": ["n"],
     }
+
+
+def test_nested_objects_are_merged_recursively():
+    data = {"l": [{"u": {"name": "a"}}, {"u": {"name": "b", "age": 3}}]}
+
+    assert prop(data, "l")["items"]["properties"]["u"] == {
+        "type": "object",
+        "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
+        "required": ["name"],
+    }
+
+
+def test_objects_and_primitives_stay_separate_in_anyof():
+    data = {"l": [1, {"n": 1}, {"m": True}, "x"]}
+
+    assert prop(data, "l")["items"] == {
+        "anyOf": [
+            {"type": "integer"},
+            {
+                "type": "object",
+                "properties": {"n": {"type": "integer"}, "m": {"type": "boolean"}},
+                "required": [],
+            },
+            {"type": "string"},
+        ]
+    }
+
+
+MERGE_SAMPLES = [
+    {"l": [{"n": 1}, {"n": "1"}, {"m": None}]},
+    {"l": [{"u": {"name": "a"}}, {"u": {"name": "b", "age": 3}}, {"u": None}]},
+    {"l": [1, {"n": 1}, {"m": True}, "x", [1]]},
+]
+
+
+@pytest.mark.parametrize("data", MERGE_SAMPLES)
+def test_merged_schema_is_valid_and_validates_its_input(data):
+    schema = generate_schema(data)
+
+    jsonschema.Draft7Validator.check_schema(schema)
+    jsonschema.validate(instance=data, schema=schema)
+
+
+def test_merged_schema_still_rejects_wrong_types():
+    schema = generate_schema({"l": [{"n": 1}, {"n": 2, "m": True}]})
+
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(instance={"l": [{"n": "uno"}]}, schema=schema)
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(instance={"l": [{"m": True}]}, schema=schema)  # falta n

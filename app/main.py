@@ -50,7 +50,7 @@ TAGS_METADATA = [
 app = FastAPI(
     title="JSON Intelligence API",
     description=API_DESCRIPTION,
-    version="1.0.0",
+    version="2.0.0",
     contact={
         "name": "Galilea Granados",
         "email": "galileagranados19@gmail.com",

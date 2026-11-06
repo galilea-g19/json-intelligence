@@ -58,6 +58,7 @@ def register_error_handlers(app: FastAPI):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
                 "error": "Invalid request",
+                "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY,
                 "details": exc.errors(),
                 "path": request.url.path
             }
@@ -69,6 +70,7 @@ def register_error_handlers(app: FastAPI):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
                 "error": "Internal server error",
+                "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "message": str(exc) if app.debug else "An unexpected error occurred. Please try again later.",
                 "path": request.url.path
             }

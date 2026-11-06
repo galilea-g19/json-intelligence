@@ -14,7 +14,13 @@ que llama a Groq de verdad.
 - ✅ **#22** Endpoints, errores y middleware: 42 tests + 4 `xfail`
   (EP-15, ER-05 ×2, MW-07).
 - **Total:** 111 tests en verde + 7 `xfail`, cobertura de `app/` del **99 %**, ~1 s.
-- ⏳ #23 (CI) y #24 (bugs) pendientes.
+- 🟡 **#24** Bugs: corregidos **AN-11** (tipos JSON), **SC-11** (unir objetos) y
+  **ER-05** (`status_code` en 422/500). API subida a **2.0.0**.
+  **AN-10** (analizar todos los elementos del arreglo: rutas únicas, tipos
+  `"a | b"`, arreglos mezclados conservan todos sus tipos).
+  Pendientes: EP-15, MW-07.
+- **Total actual:** 142 tests en verde + 2 `xfail`, cobertura de `app/` del 98 %.
+- ⏳ #23 (CI) pendiente.
 
 ---
 
@@ -178,9 +184,9 @@ Los casos marcados con 🐞 documentan un bug conocido y van como `xfail(strict=
 | AN-06 | Arreglo de primitivos `[1,"a"]` | `structure == ["int","str"]` | P0 |
 | AN-07 | Arreglo vacío | `structure.l == []`, sin error | P1 |
 | AN-08 | `bool`, `None`, `float` | `bool`, `NoneType`, `float` (no confundir `bool` con `int`) | P1 |
-| AN-09 | Arreglos dentro de arreglos `[[1,2]]` | no truena; documentar la salida actual | P2 |
-| 🐞 AN-10 | `[{n:1},{n:2,m:true}]` | debería detectar `l[].m`; **hoy solo mira el primer elemento** | P0 |
-| 🐞 AN-11 | Nombres de tipo | debería usar nombres JSON (`object`, `string`…) como `/schema`; **hoy usa los de Python** | P1 (requiere decisión) |
+| AN-09 | Arreglos dentro de arreglos `[[1,2]]` | no truena; se reportan como `["array"]` sin recorrerlos | P2 |
+| ✅ AN-10 | `[{n:1},{n:2,m:true}]` | detecta `l[].m`: se recorren todos los elementos. `key_count` = rutas únicas; tipos que varían → `"null \| string"`; arreglos mezclados conservan todos los tipos. **Corregido en 2.0.0** | P0 |
+| ✅ AN-11 | Nombres de tipo | usa nombres JSON (`object`, `string`…) como `/schema`. **Corregido en 2.0.0** | P1 |
 
 ### 5.2 `generate_schema()`: unitarios
 
@@ -196,7 +202,7 @@ Los casos marcados con 🐞 documentan un bug conocido y van como `xfail(strict=
 | SC-08 | Arreglo vacío | `items: {}` | P1 |
 | SC-09 | **El schema generado valida el propio input** | `jsonschema.validate(data, schema)` pasa | P1 (añade `jsonschema` como dependencia de desarrollo) |
 | SC-10 | Test con muchos datos generados (`hypothesis`): cualquier objeto JSON produce un schema que lo valida | sin excepciones | P2 |
-| 🐞 SC-11 | `[{n:1},{n:2,m:true}]` | idealmente un solo objeto con `n` requerido y `m` opcional; **hoy son dos entradas en `anyOf`** | P2 (decisión de diseño) |
+| ✅ SC-11 | `[{n:1},{n:2,m:true}]` | un solo objeto con `n` requerido y `m` opcional; misma clave con tipos distintos → `anyOf` en esa propiedad. **Corregido en 2.0.0** | P2 |
 
 ### 5.3 `explain_json()`: unitarios con Groq simulado
 
@@ -242,7 +248,7 @@ Los casos marcados con 🐞 documentan un bug conocido y van como `xfail(strict=
 | ER-02 | 422 | `error="Invalid request"`, `details` es una lista | P0 |
 | ER-03 | Excepción no controlada (ruta de prueba añadida solo en el test) | 500 con mensaje genérico, sin traza | P1 |
 | ER-04 | El servicio lanza una excepción dentro de `/analyze` | 400 con `detail` | P2 |
-| 🐞 ER-05 | 422 y 500 | deberían incluir `status_code` como promete el README; **hoy solo los 4xx/5xx de `HTTPException` y `AppError` lo traen** | P1 |
+| ✅ ER-05 | 422 y 500 | incluyen `status_code` como el resto de errores. **Corregido en 2.0.0** | P1 |
 
 ### 5.6 Middleware
 
@@ -428,11 +434,12 @@ insignia con el estado de los tests.
 
 **Tareas**
 
-- AN-10: recorrer todos los elementos del arreglo y unir las claves
+- ✅ AN-10: recorrer todos los elementos del arreglo y unir las claves (decidido: rutas únicas, `"a | b"`, conservar tipos en arreglos mezclados)
 - EP-15: mensaje 502 genérico; el detalle va solo al log
-- ER-05: añadir `status_code` a los handlers de 422 y 500
+- ✅ ER-05: añadir `status_code` a los handlers de 422 y 500
 - MW-07: registrar en el log también las peticiones que terminan en 500 (`try/except` en `RequestLoggingMiddleware`)
-- Decidir AN-11 (nombres de tipos) y SC-11 (unir objetos en `anyOf`)
+- ✅ AN-11: nombres de tipo JSON (decidido: cambiar, con subida de versión a 2.0.0)
+- ✅ SC-11: unir objetos de un arreglo en un solo schema (decidido: combinar)
 
 **DoD**
 

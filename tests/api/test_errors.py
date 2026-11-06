@@ -54,14 +54,14 @@ def test_unhandled_exception_is_generic_500(client, monkeypatch):
 
 
 # ER-05: el README promete {error, status_code, path} para TODO error.
-@pytest.mark.xfail(reason="BUG ER-05: los 422 no incluyen status_code en el body")
 def test_422_includes_status_code(client):
     r = client.post("/api/v1/json/analyze", json={})
 
-    assert r.json().get("status_code") == 422
+    body = r.json()
+    assert body["status_code"] == 422
+    assert ENVELOPE <= set(body)  # 422 agrega "details"
 
 
-@pytest.mark.xfail(reason="BUG ER-05: los 500 no incluyen status_code en el body")
 def test_500_includes_status_code(client, monkeypatch):
     def boom(_):
         raise RuntimeError("x")
@@ -70,4 +70,6 @@ def test_500_includes_status_code(client, monkeypatch):
 
     r = client.post("/api/v1/json/explain", json={"data": {"a": 1}})
 
-    assert r.json().get("status_code") == 500
+    body = r.json()
+    assert body["status_code"] == 500
+    assert ENVELOPE <= set(body)  # 500 agrega "message"

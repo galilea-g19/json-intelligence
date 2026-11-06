@@ -15,12 +15,34 @@ def test_analyze_returns_expected_shape(client):
     assert set(body) == {"key_count", "types", "nested_structure"}
     assert body["key_count"] == 4
     assert body["types"] == {
-        "user": "dict",
-        "user.name": "str",
-        "user.age": "int",
-        "skills": "list",
+        "user": "object",
+        "user.name": "string",
+        "user.age": "integer",
+        "skills": "array",
     }
-    assert body["nested_structure"] == {"user": {"name": "str", "age": "int"}, "skills": ["str"]}
+    assert body["nested_structure"] == {
+        "user": {"name": "string", "age": "integer"},
+        "skills": ["string"],
+    }
+
+
+def test_analyze_merges_every_object_in_arrays(client):
+    data = {"usuarios": [{"nombre": "Ana", "email": None}, {"nombre": "Luis", "email": "l@x.com", "edad": 30}]}
+
+    r = client.post(URL, json={"data": data})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["key_count"] == 4
+    assert body["types"] == {
+        "usuarios": "array",
+        "usuarios[].nombre": "string",
+        "usuarios[].email": "null | string",
+        "usuarios[].edad": "integer",
+    }
+    assert body["nested_structure"] == {
+        "usuarios": [{"nombre": "string", "email": "null | string", "edad": "integer"}]
+    }
 
 
 def test_analyze_empty_object(client):

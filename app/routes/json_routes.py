@@ -22,9 +22,12 @@ COMMON_ERRORS = {
     response_model=AnalysisResponse,
     summary="Analyze a JSON structure",
     description=(
-        "Walks the object recursively and reports how many keys it holds, the "
-        "type of every key (dotted paths for nested keys, `[]` for objects inside "
-        "arrays) and a type-only mirror of the structure."
+        "Walks the object recursively and reports how many unique key paths it "
+        "holds, the type of every path (dotted paths for nested keys, `[]` for "
+        "objects inside arrays) and a type-only mirror of the structure. Every "
+        "item of an array is inspected and its objects are merged; a path whose "
+        "type varies is reported as a union such as `null | string`. Types use "
+        "JSON names: `object`, `array`, `string`, `integer`, `number`, `boolean`, `null`."
     ),
     responses={
         **COMMON_ERRORS,
@@ -50,9 +53,10 @@ async def analyze_json_endpoint(payload: JsonInput):
     response_model=SchemaResponse,
     summary="Generate a JSON Schema",
     description=(
-        "Infers a draft-07 JSON Schema from the payload. Every key present in the "
-        "sample is treated as required, and arrays collapse to `items` when their "
-        "elements share a shape (`anyOf` when they don't)."
+        "Infers a draft-07 JSON Schema from the payload. Every top-level key is "
+        "required. Objects inside an array are merged into a single item schema "
+        "(keys missing from some objects become optional); other differing item "
+        "types are listed in `anyOf`."
     ),
     responses={
         **COMMON_ERRORS,

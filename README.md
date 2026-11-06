@@ -34,11 +34,11 @@ A minimal UI is bundled for demos, but the core of the project is the API design
 
 ### Analyze JSON
 
-Recursive walk over the object. Returns the total key count, the type of every key using **dotted paths** (`user.address.city`, `projects[].name` for objects inside arrays) and a type-only mirror of the structure.
+Recursive walk over the object. Returns the total key count, the type of every key using **dotted paths** (`user.address.city`, `projects[].name` for objects inside arrays) and a type-only mirror of the structure. **Every item of an array is inspected**: the keys of all its objects are merged, a key whose type varies between objects is reported as a union (`"null | string"`), and the key count is the number of **unique paths** (`users[].name` counts once however many users there are). Types use JSON names (`object`, `array`, `string`, `integer`, `number`, `boolean`, `null`), the same vocabulary as `/schema` and `/explain`.
 
 ### Generate Schema
 
-Infers a valid **JSON Schema draft-07** from a sample payload: nested objects, arrays with a single item shape (`items`) or mixed shapes (`anyOf`), and `required` derived from the keys present.
+Infers a valid **JSON Schema draft-07** from a sample payload: nested objects, arrays collapsed to a single `items` schema, and `required` derived from the keys present. Objects inside an array are **merged**: a key present in every object is required, a key present in only some is optional, and a key whose type varies becomes `anyOf`. Item types that can't be merged (e.g. numbers and objects in the same array) are listed in `anyOf`.
 
 ### Explain JSON (AI)
 
@@ -175,14 +175,14 @@ Every endpoint takes the same envelope — a top-level `data` **object** (not an
 {
   "key_count": 4,
   "types": {
-    "user": "dict",
-    "user.name": "str",
-    "user.age": "int",
-    "skills": "list"
+    "user": "object",
+    "user.name": "string",
+    "user.age": "integer",
+    "skills": "array"
   },
   "nested_structure": {
-    "user": { "name": "str", "age": "int" },
-    "skills": ["str"]
+    "user": { "name": "string", "age": "integer" },
+    "skills": ["string"]
   }
 }
 ```
@@ -231,6 +231,9 @@ Every failure returns the same envelope:
 ```json
 { "error": "Payload too large", "status_code": 413, "path": "/api/v1/json/explain" }
 ```
+
+`422` responses add a `details` array with the validation errors, and `500`
+responses add a generic `message`.
 
 | Status | When |
 | --- | --- |
@@ -309,6 +312,19 @@ json-intelligence/
 ├── pytest.ini
 └── README.md
 ```
+
+---
+
+## Changelog
+
+### 2.0.0 — breaking changes
+
+- `/analyze` reports **JSON type names** (`object`, `array`, `string`, `integer`, `number`, `boolean`, `null`) instead of Python ones (`dict`, `list`, `str`, `int`, `float`, `bool`, `NoneType`), in both `types` and `nested_structure`.
+- `/analyze` **inspects every item of an array**, not only the first one: keys from all the objects are merged, varying types are reported as `"a | b"`, and array structures list each item type once (`[1, 2, 3]` → `["integer"]`).
+- `/schema` **merges objects inside arrays** into one item schema instead of one `anyOf` branch per shape. Keys missing from some objects are no longer `required`.
+- `422` and `500` responses now include `status_code`, like every other error.
+
+Routes stay under `/api/v1`: there were no external consumers to keep on the old behaviour.
 
 ---
 

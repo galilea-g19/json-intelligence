@@ -66,7 +66,7 @@ def test_body_reaches_endpoint_intact(client):
     r = client.post(URL, json={"data": {"ciudad": "Guadalajara", "cp": 44100}})
 
     assert r.status_code == 200
-    assert r.json()["types"] == {"ciudad": "str", "cp": "int"}
+    assert r.json()["types"] == {"ciudad": "string", "cp": "integer"}
 
 
 def test_get_without_body_is_not_blocked(client, small_limit):
