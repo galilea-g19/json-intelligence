@@ -1,4 +1,5 @@
 import json
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -7,6 +8,15 @@ from fastapi.testclient import TestClient
 import app.services.ai as ai
 from app.core.config import settings
 from app.main import app
+
+# app.main llama a setup_logging() al importarse y abre logs/app.log, que está
+# versionado. Se quita el FileHandler para que correr los tests no ensucie el
+# log real; caplog sigue funcionando porque agrega su propio handler.
+_root = logging.getLogger()
+for _handler in list(_root.handlers):
+    if isinstance(_handler, logging.FileHandler):
+        _root.removeHandler(_handler)
+        _handler.close()
 
 
 @pytest.fixture

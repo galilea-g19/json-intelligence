@@ -10,7 +10,11 @@ que llama a Groq de verdad.
   `test_ai.py` movido a `scripts/try_ai.py`.
 - ✅ **#20** Unitarios de analyzer y schema generator: 47 tests + 3 `xfail`
   (AN-10, AN-11, SC-11), cobertura 100 % en ambos módulos.
-- ⏳ #21-#24 pendientes.
+- ✅ **#21** Servicio de IA con Groq simulado: 22 tests.
+- ✅ **#22** Endpoints, errores y middleware: 42 tests + 4 `xfail`
+  (EP-15, ER-05 ×2, MW-07).
+- **Total:** 111 tests en verde + 7 `xfail`, cobertura de `app/` del **99 %**, ~1 s.
+- ⏳ #23 (CI) y #24 (bugs) pendientes.
 
 ---
 
@@ -148,10 +152,12 @@ def valid_explanation() -> str:
 ```
 
 **Aislamiento de logs:** `app/core/logging.py` crea `logs/` y abre
-`logs/app.log` en el directorio actual **al importarse**, así que los tests
-escriben en el log real. Para el primer paso basta con aceptarlo (está en
-`.gitignore`). Mejora sugerida: leer la ruta del log desde `Settings` y
-apuntarla a `tmp_path` en los tests.
+`logs/app.log` en el directorio actual **al importarse**. Ese archivo sigue
+versionado (se subió antes de ignorar `logs/`), así que los tests de API lo
+modificarían. **Implementado:** `conftest.py` quita el `FileHandler` del root
+logger después de importar la app; `caplog` sigue funcionando. Mejora
+sugerida a futuro: leer la ruta del log desde `Settings` y sacar
+`logs/app.log` del repo con `git rm --cached`.
 
 ---
 
@@ -236,6 +242,7 @@ Los casos marcados con 🐞 documentan un bug conocido y van como `xfail(strict=
 | ER-02 | 422 | `error="Invalid request"`, `details` es una lista | P0 |
 | ER-03 | Excepción no controlada (ruta de prueba añadida solo en el test) | 500 con mensaje genérico, sin traza | P1 |
 | ER-04 | El servicio lanza una excepción dentro de `/analyze` | 400 con `detail` | P2 |
+| 🐞 ER-05 | 422 y 500 | deberían incluir `status_code` como promete el README; **hoy solo los 4xx/5xx de `HTTPException` y `AppError` lo traen** | P1 |
 
 ### 5.6 Middleware
 
@@ -247,6 +254,7 @@ Los casos marcados con 🐞 documentan un bug conocido y van como `xfail(strict=
 | MW-04 | Después del middleware el endpoint sigue pudiendo leer el body | 200 normal | P0 (lo cubren EP-01/02) |
 | MW-05 | Límite configurable: `monkeypatch` de `settings.max_body_bytes=100` | 413 con un body de 101 bytes | P1 |
 | MW-06 | El logging registra también los 413 (`caplog`) | aparece `POST ... -> 413` | P2 |
+| 🐞 MW-07 | Excepción no controlada (500) | debería aparecer `-> 500` en el log; **hoy la excepción atraviesa `RequestLoggingMiddleware` y no se registra** | P1 |
 
 **Total:** unos 55 casos (26 P0). Por las pruebas manuales que hice, el MVP de
 tests (P0) se puede escribir en 1 o 2 días.
@@ -422,6 +430,8 @@ insignia con el estado de los tests.
 
 - AN-10: recorrer todos los elementos del arreglo y unir las claves
 - EP-15: mensaje 502 genérico; el detalle va solo al log
+- ER-05: añadir `status_code` a los handlers de 422 y 500
+- MW-07: registrar en el log también las peticiones que terminan en 500 (`try/except` en `RequestLoggingMiddleware`)
 - Decidir AN-11 (nombres de tipos) y SC-11 (unir objetos en `anyOf`)
 
 **DoD**
