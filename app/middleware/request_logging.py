@@ -12,7 +12,20 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         start = time.perf_counter()
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception as exc:
+            # An unhandled error propagates through this middleware before the
+            # global handler turns it into a 500, so without this branch the
+            # request would never reach the log (MW-07). It is re-raised so the
+            # handler in app.core.exceptions still builds the response.
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            logger.error(
+                f"{request.method} {request.url.path} -> 500 "
+                f"({elapsed_ms:.0f} ms) [{type(exc).__name__}]"
+            )
+            raise
+
         elapsed_ms = (time.perf_counter() - start) * 1000
         logger.info(
             f"{request.method} {request.url.path} -> {response.status_code} "

@@ -4,7 +4,7 @@ Plan para cubrir con tests automatizados la API, los servicios y el manejo de
 errores. Hoy el proyecto no tiene ninguno: `test_ai.py` es un script manual
 que llama a Groq de verdad.
 
-**Estado:** se implementa como **EPIC 7** (issues #19-#24, al final).
+**Estado:** ✅ **EPIC 7 completada** (issues #19-#24, al final).
 
 - ✅ **#19** Infraestructura: `pytest.ini`, `requirements-dev.txt`, `tests/conftest.py`,
   `test_ai.py` movido a `scripts/try_ai.py`.
@@ -14,13 +14,16 @@ que llama a Groq de verdad.
 - ✅ **#22** Endpoints, errores y middleware: 42 tests + 4 `xfail`
   (EP-15, ER-05 ×2, MW-07).
 - **Total:** 111 tests en verde + 7 `xfail`, cobertura de `app/` del **99 %**, ~1 s.
-- 🟡 **#24** Bugs: corregidos **AN-11** (tipos JSON), **SC-11** (unir objetos) y
-  **ER-05** (`status_code` en 422/500). API subida a **2.0.0**.
-  **AN-10** (analizar todos los elementos del arreglo: rutas únicas, tipos
-  `"a | b"`, arreglos mezclados conservan todos sus tipos).
-  Pendientes: EP-15, MW-07.
-- **Total actual:** 142 tests en verde + 2 `xfail`, cobertura de `app/` del 98 %.
-- ⏳ #23 (CI) pendiente.
+- ✅ **#23** CI: `.github/workflows/tests.yml` con Python 3.11 y 3.14,
+  `--cov-fail-under=95` e insignia en el README. Verificado en local con 3.11.15
+  y 3.14.6.
+- ✅ **#24** Bugs corregidos (API **2.0.0**): **AN-10** (todos los elementos del
+  arreglo), **AN-11** (tipos JSON), **SC-11** (unir objetos), **ER-05**
+  (`status_code` en 422/500), **EP-15** (502 genérico, detalle al log) y
+  **MW-07** (los 500 quedan en el log de requests).
+- **Resultado final:** 148 tests en verde, **0 `xfail`**, cobertura de `app/` del 99 %.
+
+**EPIC 7 cerrada.**
 
 ---
 
@@ -238,7 +241,7 @@ Los casos marcados con 🐞 documentan un bug conocido y van como `xfail(strict=
 | EP-12 | `GET /ui` | 307 hacia `/ui/`; `GET /ui/` devuelve HTML | P1 |
 | EP-13 | `GET /test-env` | **nunca** devuelve la clave completa, solo `preview` de 5 caracteres + `...` | P0 (seguridad) |
 | EP-14 | `GET /openapi.json` | 200, contiene las 3 rutas y las respuestas 413/422/502 documentadas | P2 |
-| 🐞 EP-15 | 502 por salida inválida de la IA | **hoy el mensaje incluye el error interno de Pydantic o del SDK**; debería ser genérico y dejar el detalle en el log | P1 |
+| ✅ EP-15 | 502 por salida inválida de la IA o error del SDK | mensaje genérico al cliente; el detalle (y la respuesta cruda, truncada a 500 caracteres) va a `logger.warning`. **Corregido en 2.0.0** | P1 |
 
 ### 5.5 Formato de error y handlers
 
@@ -260,7 +263,7 @@ Los casos marcados con 🐞 documentan un bug conocido y van como `xfail(strict=
 | MW-04 | Después del middleware el endpoint sigue pudiendo leer el body | 200 normal | P0 (lo cubren EP-01/02) |
 | MW-05 | Límite configurable: `monkeypatch` de `settings.max_body_bytes=100` | 413 con un body de 101 bytes | P1 |
 | MW-06 | El logging registra también los 413 (`caplog`) | aparece `POST ... -> 413` | P2 |
-| 🐞 MW-07 | Excepción no controlada (500) | debería aparecer `-> 500` en el log; **hoy la excepción atraviesa `RequestLoggingMiddleware` y no se registra** | P1 |
+| ✅ MW-07 | Excepción no controlada (500) | aparece `-> 500 (x ms) [TipoDeExcepción]` a nivel ERROR. **Corregido en 2.0.0** | P1 |
 
 **Total:** unos 55 casos (26 P0). Por las pruebas manuales que hice, el MVP de
 tests (P0) se puede escribir en 1 o 2 días.
@@ -423,8 +426,8 @@ insignia con el estado de los tests.
 
 **Tareas**
 
-- `tests.yml` con matriz 3.11 / 3.14 y `--cov-fail-under=85`
-- Insignia en el README; quitar "Automated test suite" del roadmap
+- ✅ `tests.yml` con matriz 3.11 / 3.14 y `--cov-fail-under=95` (subido de 85: la cobertura real es 99 %)
+- ✅ Insignia en el README; quitar "Automated test suite" del roadmap
 
 **DoD**
 
@@ -435,9 +438,9 @@ insignia con el estado de los tests.
 **Tareas**
 
 - ✅ AN-10: recorrer todos los elementos del arreglo y unir las claves (decidido: rutas únicas, `"a | b"`, conservar tipos en arreglos mezclados)
-- EP-15: mensaje 502 genérico; el detalle va solo al log
+- ✅ EP-15: mensaje 502 genérico; el detalle va solo al log
 - ✅ ER-05: añadir `status_code` a los handlers de 422 y 500
-- MW-07: registrar en el log también las peticiones que terminan en 500 (`try/except` en `RequestLoggingMiddleware`)
+- ✅ MW-07: registrar en el log también las peticiones que terminan en 500 (`try/except` en `RequestLoggingMiddleware`)
 - ✅ AN-11: nombres de tipo JSON (decidido: cambiar, con subida de versión a 2.0.0)
 - ✅ SC-11: unir objetos de un arreglo en un solo schema (decidido: combinar)
 

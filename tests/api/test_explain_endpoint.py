@@ -64,13 +64,25 @@ def test_explain_missing_data_is_422(client):
     assert client.post(URL, json={}).status_code == 422
 
 
-# EP-15
-@pytest.mark.xfail(reason="BUG EP-15: el 502 expone el detalle interno de Pydantic/SDK al cliente")
-def test_502_does_not_leak_internal_details(client, fake_groq):
+# EP-15: el cliente recibe un mensaje genérico; el detalle solo va al log.
+def test_502_does_not_leak_validation_details(client, fake_groq):
     fake_groq('{"summary": "x", "nesting_levels": -1}')
 
     r = client.post(URL, json={"data": {"a": 1}})
 
-    error = r.json()["error"]
-    assert "validation error" not in error
-    assert "pydantic" not in error
+    assert r.status_code == 502
+    assert r.json()["error"] == "La respuesta de la IA no cumple el formato esperado."
+    assert "validation error" not in r.text
+    assert "pydantic" not in r.text
+    assert "nesting_levels" not in r.text
+
+
+def test_502_does_not_leak_provider_error(client, fake_groq):
+    fake_groq(raises=RuntimeError("401 invalid api key gsk_abc123 for org-xyz"))
+
+    r = client.post(URL, json={"data": {"a": 1}})
+
+    assert r.status_code == 502
+    assert r.json()["error"] == "Error al llamar a la IA. Intenta de nuevo más tarde."
+    assert "gsk_abc123" not in r.text
+    assert "RuntimeError" not in r.text

@@ -4,7 +4,7 @@ Original planning board for the project: epics, issues and the recommended
 order in which they were tackled. Kept out of the README so the README can
 stay a product/usage document.
 
-**Status:** EPIC 1-6 done.
+**Status:** EPIC 1-6 done. EPIC 7 (automated tests) done — see [TESTING.md](./TESTING.md).
 
 ---
 

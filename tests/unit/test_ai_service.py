@@ -1,5 +1,6 @@
 """Tests unitarios de app.services.ai (casos AI-* de docs/TESTING.md). Groq siempre simulado."""
 import json
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -113,8 +114,46 @@ def test_wrong_shape_raises(fake_groq, payload):
 def test_sdk_exception_is_wrapped(fake_groq):
     fake_groq(raises=RuntimeError("connection reset"))
 
-    with pytest.raises(AIResponseError, match="Error al llamar a la IA"):
+    with pytest.raises(AIResponseError, match="Error al llamar a la IA") as excinfo:
         ai.explain_json({"a": 1})
+
+    assert "connection reset" not in str(excinfo.value)
+    assert isinstance(excinfo.value.__cause__, RuntimeError)  # la causa se conserva
+
+
+# EP-15: lo que no ve el cliente queda en el log para poder depurar
+def test_sdk_error_detail_is_logged(fake_groq, caplog):
+    fake_groq(raises=RuntimeError("connection reset"))
+
+    with caplog.at_level(logging.WARNING, logger="app.services.ai"):
+        with pytest.raises(AIResponseError):
+            ai.explain_json({"a": 1})
+
+    assert any("RuntimeError: connection reset" in m for m in caplog.messages)
+
+
+def test_invalid_format_detail_and_raw_response_are_logged(fake_groq, caplog):
+    fake_groq('{"summary": "s", "nesting_levels": -1}')
+
+    with caplog.at_level(logging.WARNING, logger="app.services.ai"):
+        with pytest.raises(AIResponseError) as excinfo:
+            ai.explain_json({"a": 1})
+
+    assert str(excinfo.value) == ai.AI_INVALID_FORMAT
+    logged = caplog.text
+    assert "nesting_levels" in logged          # detalle de Pydantic
+    assert '"nesting_levels": -1' in logged    # respuesta cruda del modelo
+
+
+def test_logged_raw_response_is_truncated(fake_groq, caplog):
+    fake_groq("x" * 5000)
+
+    with caplog.at_level(logging.WARNING, logger="app.services.ai"):
+        with pytest.raises(AIResponseError):
+            ai.explain_json({"a": 1})
+
+    assert "x" * ai.MAX_LOGGED_RESPONSE_CHARS in caplog.text
+    assert "x" * (ai.MAX_LOGGED_RESPONSE_CHARS + 1) not in caplog.text
 
 
 # AI-09

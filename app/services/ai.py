@@ -1,10 +1,19 @@
 import json
+import logging
 #from openai import OpenAI
 from groq import Groq
 from pydantic import ValidationError
 from app.core.config import settings
 from app.core.exceptions import PayloadTooLargeError, AIResponseError
 from app.models.response_models import JsonExplanation
+
+logger = logging.getLogger(__name__)
+
+# Messages returned to the client. They are deliberately generic (EP-15): the
+# provider's error text and Pydantic's validation details only go to the log.
+AI_CALL_FAILED = "Error al llamar a la IA. Intenta de nuevo más tarde."
+AI_INVALID_FORMAT = "La respuesta de la IA no cumple el formato esperado."
+MAX_LOGGED_RESPONSE_CHARS = 500
 
 _client: Groq | None = None
 
@@ -63,7 +72,8 @@ JSON a analizar:
     except AIResponseError:
         raise
     except Exception as e:
-        raise AIResponseError(f"Error al llamar a la IA (Groq): {str(e)}")
+        logger.warning("Groq call failed: %s: %s", type(e).__name__, e)
+        raise AIResponseError(AI_CALL_FAILED) from e
 
     if not raw or not raw.strip():
         raise AIResponseError("La AI devolvió una respuesta vacía")
@@ -73,4 +83,9 @@ JSON a analizar:
         parsed = json.loads(raw)
         return JsonExplanation.model_validate(parsed)
     except (json.JSONDecodeError, ValidationError) as e:
-        raise AIResponseError(f"La respuesta de la IA no cumple el formato esperado: {e}")
+        logger.warning(
+            "AI response does not match JsonExplanation: %s | raw response (truncated): %r",
+            e,
+            raw[:MAX_LOGGED_RESPONSE_CHARS],
+        )
+        raise AIResponseError(AI_INVALID_FORMAT) from e

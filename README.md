@@ -4,6 +4,8 @@
 
 FastAPI · Pydantic · Groq (LLM) · vanilla JS demo UI
 
+[![Tests](https://github.com/galilea-g19/json-intelligence/actions/workflows/tests.yml/badge.svg)](https://github.com/galilea-g19/json-intelligence/actions/workflows/tests.yml)
+
 ---
 
 ## The problem
@@ -143,8 +145,10 @@ pytest                                   # whole suite, no network or API key ne
 pytest --cov=app --cov-report=term-missing
 ```
 
-Groq is always mocked in the test suite. Known bugs are kept as strict `xfail`
-tests; see [docs/TESTING.md](docs/TESTING.md) for the full test plan.
+Groq is always mocked in the test suite, so it needs no network or API key.
+The same suite runs in GitHub Actions on every push and pull request (Python 3.11
+and 3.14, minimum 95 % coverage). See [docs/TESTING.md](docs/TESTING.md) for the
+full test plan.
 To try the real AI call by hand (uses credits): `python -m scripts.try_ai`.
 
 ### Troubleshooting
@@ -153,7 +157,7 @@ To try the real AI call by hand (uses credits): `python -m scripts.try_ai`.
 | --- | --- |
 | `ModuleNotFoundError: No module named 'app'` | Run `uvicorn` from the project root, not from `app/` |
 | UI shows **API offline** | The server isn't running, or you opened `index.html` from disk instead of `/ui/` |
-| `/explain` returns **502** | `GROQ_API_KEY` missing/invalid, or the configured model is unavailable for your account (`app/services/ai.py`) |
+| `/explain` returns **502** | `GROQ_API_KEY` missing/invalid, or the configured model is unavailable for your account (`app/services/ai.py`). The client only gets a generic message; the real cause is in `logs/app.log` |
 | `/explain` returns **413** | The payload is over `MAX_AI_JSON_BYTES` — the LLM limit is deliberately stricter than the HTTP one |
 | Port already in use | `uvicorn app.main:app --port 8001` |
 
@@ -323,6 +327,8 @@ json-intelligence/
 - `/analyze` **inspects every item of an array**, not only the first one: keys from all the objects are merged, varying types are reported as `"a | b"`, and array structures list each item type once (`[1, 2, 3]` → `["integer"]`).
 - `/schema` **merges objects inside arrays** into one item schema instead of one `anyOf` branch per shape. Keys missing from some objects are no longer `required`.
 - `422` and `500` responses now include `status_code`, like every other error.
+- `502` responses from `/explain` carry a **generic message**; the provider error and the Pydantic validation details are only written to the log.
+- Unhandled errors (`500`) now appear in the request log.
 
 Routes stay under `/api/v1`: there were no external consumers to keep on the old behaviour.
 
@@ -330,7 +336,6 @@ Routes stay under `/api/v1`: there were no external consumers to keep on the old
 
 ## Roadmap
 
-- Extend the test suite to the endpoints, the AI service and the error envelope (see `docs/TESTING.md`)
 - Docker image for one-command runs
 - Schema export (download `.json`) from the UI
 - Rate limiting and authentication

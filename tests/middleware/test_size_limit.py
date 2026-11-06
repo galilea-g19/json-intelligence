@@ -88,8 +88,7 @@ def test_request_log_format(client, caplog):
     assert any(m.startswith("GET / -> 200 (") and m.endswith(" ms)") for m in caplog.messages)
 
 
-# MW-07
-@pytest.mark.xfail(reason="BUG MW-07: un 500 no controlado no queda registrado en el log de requests")
+# MW-07: un 500 no controlado también queda en el log de requests
 def test_request_log_includes_500(client, monkeypatch, caplog):
     def boom(_):
         raise RuntimeError("x")
@@ -102,4 +101,8 @@ def test_request_log_includes_500(client, monkeypatch, caplog):
 
     assert r.status_code == 500
 
-    assert any("-> 500" in m for m in caplog.messages)
+    records = [r for r in caplog.records if "-> 500" in r.getMessage()]
+    assert len(records) == 1
+    assert records[0].levelno == logging.ERROR
+    assert records[0].getMessage().startswith("POST /api/v1/json/explain -> 500 (")
+    assert records[0].getMessage().endswith("[RuntimeError]")
