@@ -4,7 +4,7 @@ Original planning board for the project: epics, issues and the recommended
 order in which they were tackled. Kept out of the README so the README can
 stay a product/usage document.
 
-**Status:** EPIC 1-6 done. EPIC 7 (automated tests) done — see [TESTING.md](./TESTING.md).
+**Status:** EPIC 1-7 done (EPIC 7, automated tests: see [TESTING.md](./TESTING.md)). EPIC 8 (production readiness) in progress.
 
 ---
 
@@ -232,6 +232,98 @@ UI básica (puede ser HTML simple)
 - endpoints
 - decisiones técnicas
 - cómo correr proyecto
+
+# 📌 EPIC 7 — Tests automatizados
+
+> **Completada.** Plan, catálogo de casos e issues #19-#24 en
+> [TESTING.md](./TESTING.md). 148 tests, 99 % de cobertura, CI en GitHub Actions.
+
+# 📌 EPIC 8 — Production readiness
+
+**Objetivo:** pasar de "funciona en mi máquina" a "se puede probar en esta URL",
+sin que una demo pública ponga en riesgo los créditos de Groq.
+
+## Issue #25 — Deuda técnica ✅
+
+**Descripción**
+
+Pendientes detectados en la revisión del código que no son bugs funcionales.
+
+**Tareas**
+
+- Sacar `logs/app.log` del repo (`git rm --cached`); `logs/` ya está en `.gitignore`
+- Reemplazar APIs obsoletas (los 6 warnings de pytest):
+  - `@app.on_event` → `lifespan`
+  - `class Config` (Pydantic v1) → `model_config`
+  - `HTTP_422_UNPROCESSABLE_ENTITY` → `HTTP_422_UNPROCESSABLE_CONTENT`
+- `/test-env`: devolver 404 cuando `ENVIRONMENT=production`
+- OpenAPI `contact`: GitHub en lugar del email personal
+- Quitar campos que nunca se rellenan en `analyze_json` (`max_depth`, `array_count`, `list_count`)
+- Quitar `load_dotenv()` redundante (pydantic-settings ya lee `.env`)
+- README: URL real del repo en lugar de `<repo-url>`
+
+**DoD**
+
+- `pytest` corre sin warnings
+- Tests nuevos para `/test-env` en producción y para el `lifespan`
+- Cobertura ≥ 95 % (CI en verde)
+
+**Resultado:** hecho. 154 tests, 0 warnings en Python 3.11 y 3.14, cobertura 99 %.
+Extra: se fijaron `starlette` y `anyio` en `requirements.txt` — FastAPI solo
+declara un rango, y una instalación limpia (como la del CI) traía versiones más
+nuevas que generaban warnings de deprecación.
+
+## Issue #26 — Docker image
+
+**Tareas**
+
+- `Dockerfile` multi-stage, imagen `python:3.x-slim`, usuario no-root
+- `.dockerignore` (`.venv`, `.env`, `logs/`, `tests/`, `.git`)
+- `HEALTHCHECK` contra `/`
+- Documentar `docker build` / `docker run --env-file .env -p 8000:8000`
+
+**DoD**
+
+- `docker run` levanta la API y la UI en `http://localhost:8000/ui/`
+
+## Issue #27 — Rate limiting en `/explain`
+
+**Descripción**
+
+`/explain` es el único endpoint con costo (Groq). En una demo pública hay que
+limitarlo por IP para que nadie agote los créditos.
+
+**Tareas**
+
+- Límite por IP configurable desde `Settings` (ej. `5/minuto`, `50/día`)
+- Respuesta `429` con el mismo envelope de error y header `Retry-After`
+- `/analyze` y `/schema` sin límite estricto (son deterministas y gratis)
+- Tests del 429
+
+**DoD**
+
+- Superar el límite devuelve 429 sin llamar a Groq
+
+## Issue #28 — Deploy de la demo
+
+**Tareas**
+
+- Elegir plataforma (Render / Fly.io / Railway) a partir de la imagen de #26
+- `GROQ_API_KEY` y `ENVIRONMENT=production` como secretos de la plataforma
+- Logs a stdout en producción (el filesystem del contenedor es efímero)
+- URL de la demo en el README (UI + `/docs`)
+
+**DoD**
+
+- La UI y Swagger responden en una URL pública
+- `/test-env` devuelve 404 en esa URL
+
+## Orden EPIC 8
+
+1. ✅ #25 → deuda técnica (base limpia)
+2. #26 → Docker
+3. #27 → rate limiting (**antes** de publicar)
+4. #28 → deploy
 
 # 🧠 Orden recomendado (muy importante)
 

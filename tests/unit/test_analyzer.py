@@ -147,6 +147,7 @@ def test_returns_summary_and_structure():
     result = analyze_json({"a": 1})
 
     assert set(result) == {"summary", "structure"}
+    assert set(result["summary"]) == {"total_keys_recursive", "key_types"}
 
 
 def test_does_not_mutate_input():

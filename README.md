@@ -62,7 +62,7 @@ Split-pane page at `/ui/`: editor on the left with live JSON validation and a by
 ### 1. Clone and enter the project
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/galilea-g19/json-intelligence.git
 cd json-intelligence
 ```
 
@@ -100,6 +100,7 @@ Optional overrides (defaults shown):
 MAX_BODY_BYTES=1048576      # 1 MB — max size of any request body
 MAX_AI_JSON_BYTES=5000      # max size of the JSON forwarded to the LLM
 MAX_AI_JSON_CHARS=10000     # same limit, counted in characters
+ENVIRONMENT=development     # "production" disables /test-env (returns 404)
 ```
 
 `.env` is git-ignored. Nothing else needs configuring — there is no database.
@@ -121,7 +122,7 @@ uvicorn app.main:app --reload
 | **ReDoc** | <http://127.0.0.1:8000/redoc> |
 | **OpenAPI schema** | <http://127.0.0.1:8000/openapi.json> |
 | Health check | <http://127.0.0.1:8000/> |
-| Key check | <http://127.0.0.1:8000/test-env> |
+| Key check (dev only) | <http://127.0.0.1:8000/test-env> |
 
 ### 7. Smoke-test from the terminal
 

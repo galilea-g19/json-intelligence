@@ -1,13 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Dict, Any
 
 class JsonInput(BaseModel):
-    data: Dict[str, Any] = Field(..., description="JSON Object to analyze")
-
-    class Config:
-        populate_by_name = True
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "data": {
                     "name": "Name example",
@@ -16,3 +12,6 @@ class JsonInput(BaseModel):
                 }
             }
         }
+    )
+
+    data: Dict[str, Any] = Field(..., description="JSON Object to analyze")

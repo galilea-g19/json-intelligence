@@ -2,8 +2,10 @@
 # Install with:  pip install -r requirements.txt
 
 fastapi==0.136.1
+starlette==1.0.0           # pinned: FastAPI only sets a range, and 1.10 deprecates httpx in TestClient
+anyio==4.13.0              # pinned: Starlette dependency; 4.16 deprecates an alias Starlette 1.0 uses
 uvicorn[standard]==0.46.0
 pydantic==2.13.4
 pydantic-settings==2.14.1
-python-dotenv==1.2.2
+python-dotenv==1.2.2       # required by pydantic-settings to read .env
 groq==1.4.0

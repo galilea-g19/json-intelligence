@@ -151,9 +151,6 @@ def analyze_json(data: Dict[str, Any], parent_key: str = "") -> Dict[str, Any]:
 
     summary = {
         "total_keys_recursive": len(key_types),
-        "max_depth": 0,
-        "array_count": 0,
-        "list_count": 0,
         "key_types": key_types,
     }
 

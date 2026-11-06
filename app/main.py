@@ -1,7 +1,7 @@
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
-from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
@@ -11,7 +11,7 @@ from app.core.logging import setup_logging
 from app.middleware.size_limit import BodySizeLimitMiddleware
 from app.middleware.request_logging import RequestLoggingMiddleware
 
-load_dotenv()
+# No load_dotenv(): pydantic-settings already reads .env (app.core.config).
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -47,18 +47,26 @@ TAGS_METADATA = [
     },
 ]
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    logger.info("Application startup complete. Ready to accept requests.")
+    yield
+    logger.info("Application shutting down.")
+
+
 app = FastAPI(
     title="JSON Intelligence API",
     description=API_DESCRIPTION,
     version="2.0.0",
     contact={
         "name": "Galilea Granados",
-        "email": "galileagranados19@gmail.com",
+        "url": "https://github.com/galilea-g19",
     },
     license_info={"name": "MIT"},
     openapi_tags=TAGS_METADATA,
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # Global error handlers
@@ -95,10 +103,15 @@ def ui_index():
     summary="Environment check",
     description=(
         "Reports whether the AI provider keys are present, without ever "
-        "returning the key itself."
+        "returning the key itself. Disabled (404) when `ENVIRONMENT=production`."
     ),
+    include_in_schema=not settings.is_production,
 )
 def test_env():
+    # Even a 5-character preview is more than a public deployment should expose.
+    if settings.is_production:
+        raise HTTPException(status_code=404, detail="Not Found")
+
     def preview(secret) -> dict:
         if secret is None:
             return {"status": "No encontrada", "preview": None}
@@ -109,16 +122,6 @@ def test_env():
         "groq_api_key": preview(settings.groq_api_key),
         "openai_api_key": preview(settings.openai_api_key),
     }
-
-
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Application startup complete. Ready to accept requests.")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Application shutting down.")
 
 
 app.include_router(router, prefix="/api/v1/json", tags=["json"])
