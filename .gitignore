@@ -7,9 +7,10 @@ venv/
 __pycache__/
 *.py[cod]
 
-# Coverage
+# Coverage / pytest
 .coverage
 htmlcov/
+.pytest_cache/
 
 # IDE
 .vscode/

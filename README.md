@@ -135,6 +135,18 @@ Requests and responses are logged to stdout and to `logs/app.log`:
 2026-08-18 19:22:31 - app.request - INFO - POST /api/v1/json/analyze -> 200 (4 ms)
 ```
 
+### 8. Run the tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest                                   # whole suite, no network or API key needed
+pytest --cov=app --cov-report=term-missing
+```
+
+Groq is always mocked in the test suite. Known bugs are kept as strict `xfail`
+tests; see [docs/TESTING.md](docs/TESTING.md) for the full test plan.
+To try the real AI call by hand (uses credits): `python -m scripts.try_ai`.
+
 ### Troubleshooting
 
 | Symptom | Cause / fix |
@@ -287,9 +299,14 @@ json-intelligence/
 │   │   ├── schema_generator.py     # JSON Schema draft-07 inference
 │   │   └── ai.py                   # Groq client, prompt, response validation
 │   └── static/                     # Demo UI (index.html, styles.css, app.js)
+├── tests/                          # pytest suite (conftest + unit tests)
+├── scripts/try_ai.py               # Manual call to the real Groq API
 ├── docs/BACKLOG.md                 # Epics and issues this project was built from
+├── docs/TESTING.md                 # Automated test plan (EPIC 7)
 ├── logs/app.log                    # Runtime log (created on first run)
 ├── requirements.txt
+├── requirements-dev.txt            # pytest, pytest-cov, jsonschema
+├── pytest.ini
 └── README.md
 ```
 
@@ -297,7 +314,7 @@ json-intelligence/
 
 ## Roadmap
 
-- Automated test suite (`pytest` + `httpx`) over the three endpoints and the error envelope
+- Extend the test suite to the endpoints, the AI service and the error envelope (see `docs/TESTING.md`)
 - Docker image for one-command runs
 - Schema export (download `.json`) from the UI
 - Rate limiting and authentication
