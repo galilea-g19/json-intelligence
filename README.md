@@ -52,6 +52,38 @@ Split-pane page at `/ui/`: editor on the left with live JSON validation and a by
 
 ---
 
+## Running with Docker
+
+The fastest way to try it: no Python install, no virtualenv.
+
+```bash
+git clone https://github.com/galilea-g19/json-intelligence.git
+cd json-intelligence
+docker compose up --build
+```
+
+Open <http://localhost:8000/ui/> (demo) or <http://localhost:8000/docs> (Swagger).
+For `/explain`, put `GROQ_API_KEY=...` in a `.env` file first; `/analyze` and
+`/schema` work without it.
+
+Without Compose:
+
+```bash
+docker build -t json-intelligence .
+docker run --env-file .env -p 8000:8000 json-intelligence
+```
+
+| Detail | Value |
+| --- | --- |
+| Base image | `python:3.14-slim`, multi-stage (no pip or build layers in the final image) |
+| User | non-root (`appuser`, uid 10001) |
+| Port | `8000`, or whatever `$PORT` says (Render, Railway and Fly.io inject it) |
+| `ENVIRONMENT` | `production` in the image (`/test-env` returns 404); `development` with `docker compose` unless you override it |
+| Health check | `GET /` every 30 s (`docker ps` shows `healthy`) |
+| Secrets | never baked in: `.env` is in `.dockerignore`, pass it at runtime with `--env-file` |
+
+---
+
 ## Running locally (development)
 
 ### Requirements
@@ -259,6 +291,7 @@ responses add a generic `message`.
 | AI | Groq (`llama-3.3-70b-versatile`) with JSON mode |
 | Config | `pydantic-settings` + `.env` |
 | Server | Uvicorn |
+| Container | Docker (multi-stage, non-root) + Docker Compose |
 | UI | Vanilla HTML/CSS/JS, no build step |
 | Docs | OpenAPI / Swagger UI / ReDoc, generated from the code |
 
@@ -315,6 +348,9 @@ json-intelligence/
 ├── requirements.txt
 ├── requirements-dev.txt            # pytest, pytest-cov, jsonschema
 ├── pytest.ini
+├── Dockerfile                      # Multi-stage production image
+├── compose.yaml                    # docker compose up --build
+├── .dockerignore
 └── README.md
 ```
 
@@ -337,7 +373,7 @@ Routes stay under `/api/v1`: there were no external consumers to keep on the old
 
 ## Roadmap
 
-- Docker image for one-command runs
+- Live demo deployment
 - Schema export (download `.json`) from the UI
 - Rate limiting and authentication
 - Saved analyses and history

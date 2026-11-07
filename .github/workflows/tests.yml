@@ -41,3 +41,48 @@ jobs:
       # (real API calls) are excluded.
       - name: Run tests
         run: pytest -m "not live" --cov=app --cov-report=term-missing --cov-fail-under=95
+
+  docker:
+    name: Docker image (build + smoke test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t json-intelligence:ci .
+
+      - name: Start container
+        # No API key: /analyze and /schema must work without it.
+        run: docker run -d --name api -p 8000:8000 json-intelligence:ci
+
+      - name: Wait until the HEALTHCHECK reports healthy
+        run: |
+          for i in $(seq 1 30); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' api)
+            echo "health: $status"
+            [ "$status" = "healthy" ] && exit 0
+            sleep 2
+          done
+          exit 1
+
+      - name: Smoke test
+        run: |
+          set -e
+          code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+
+          test "$(code http://localhost:8000/)" = 200
+          test "$(code http://localhost:8000/ui/)" = 200
+          test "$(code -X POST http://localhost:8000/api/v1/json/analyze \
+                   -H 'Content-Type: application/json' -d '{"data":{"a":[{"n":1},{"m":null}]}}')" = 200
+          test "$(code -X POST http://localhost:8000/api/v1/json/schema \
+                   -H 'Content-Type: application/json' -d '{"data":{"a":1}}')" = 200
+          # The image defaults to ENVIRONMENT=production: /test-env must be hidden
+          test "$(code http://localhost:8000/test-env)" = 404
+
+      - name: Container runs as a non-root user
+        run: test "$(docker exec api id -u)" != "0"
+
+      - name: Container logs
+        if: always()
+        run: docker logs api

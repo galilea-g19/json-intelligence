@@ -1,0 +1,39 @@
+# Only requirements.txt and app/ are copied into the image; everything else is
+# excluded to keep the build context small and secrets out of it.
+
+# Secrets — never in the image. Pass them at runtime: docker run --env-file .env
+.env
+.env.*
+
+# Environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Runtime output
+logs/
+
+# Not needed to run the API
+.git/
+.github/
+tests/
+docs/
+scripts/
+requirements-dev.txt
+pytest.ini
+README.md
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+compose.yaml
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

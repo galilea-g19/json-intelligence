@@ -273,7 +273,7 @@ Extra: se fijaron `starlette` y `anyio` en `requirements.txt` — FastAPI solo
 declara un rango, y una instalación limpia (como la del CI) traía versiones más
 nuevas que generaban warnings de deprecación.
 
-## Issue #26 — Docker image
+## Issue #26 — Docker image ✅
 
 **Tareas**
 
@@ -285,6 +285,13 @@ nuevas que generaban warnings de deprecación.
 **DoD**
 
 - `docker run` levanta la API y la UI en `http://localhost:8000/ui/`
+
+**Resultado:** `Dockerfile` (multi-stage, `python:3.14-slim`, usuario no-root,
+`HEALTHCHECK`, `$PORT`), `.dockerignore`, `compose.yaml` y documentación en el
+README. Extra: job `docker` en el CI que construye la imagen, espera a que esté
+`healthy` y hace un smoke test (`/`, `/ui/`, `/analyze`, `/schema`, `/test-env`
+→ 404, usuario no-root). Todas las dependencias tienen wheel para Linux/3.14,
+así que la imagen no necesita compilador (`--only-binary=:all:`).
 
 ## Issue #27 — Rate limiting en `/explain`
 
@@ -321,9 +328,47 @@ limitarlo por IP para que nadie agote los créditos.
 ## Orden EPIC 8
 
 1. ✅ #25 → deuda técnica (base limpia)
-2. #26 → Docker
+2. ✅ #26 → Docker
 3. #27 → rate limiting (**antes** de publicar)
 4. #28 → deploy
+
+# 🔧 Mantenimiento planificado
+
+Actualizaciones que **no son deuda técnica**: lo que hay hoy es correcto y
+tiene soporte. Se hacen cuando se cumple su condición de inicio, no antes.
+
+## Issue #29 — Actualizar a Python 3.15
+
+**Contexto**
+
+El proyecto usa **Python 3.14** (desarrollo, CI e imagen Docker), con soporte
+hasta octubre de 2030. **3.15** salió el 9 de octubre de 2026.
+
+Hoy (noviembre 2026) no es viable: `pydantic==2.13.4` exige
+`pydantic-core==2.46.4`, que **no tiene wheel para 3.15** (empiezan en 2.48).
+Con `--only-binary=:all:` en el `Dockerfile`, la imagen no se construiría.
+
+**Condición de inicio**
+
+- Pydantic, FastAPI y el resto de dependencias tienen wheels Linux para 3.15
+  en versiones estables, y
+- 3.15 tiene al menos un par de parches (≥ 3.15.3) sin regresiones conocidas
+  en el ecosistema.
+
+**Tareas**
+
+- Actualizar `pydantic` / `pydantic-core` (y `fastapi`, `starlette`, `anyio`
+  si hace falta) en `requirements.txt`
+- Verificar wheels para Linux / cp315:
+  `pip download -r requirements.txt --platform manylinux2014_x86_64 --python-version 3.15 --only-binary=:all:`
+- Añadir 3.15 a la matriz del CI (mantener 3.11 como mínimo soportado)
+- `Dockerfile`: `ARG PYTHON_VERSION=3.15`
+- Actualizar el README (requisitos, tabla de Docker)
+
+**DoD**
+
+- 154+ tests en verde en 3.11 y 3.15, sin warnings
+- El job `docker` del CI construye la imagen 3.15 y pasa el smoke test
 
 # 🧠 Orden recomendado (muy importante)
 

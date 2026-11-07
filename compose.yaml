@@ -1,0 +1,17 @@
+# Local run with one command:  docker compose up --build
+# UI: http://localhost:8000/ui/   ·   Swagger: http://localhost:8000/docs
+
+services:
+  api:
+    build: .
+    image: json-intelligence:local
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env        # GROQ_API_KEY and optional limits
+        required: false   # /analyze and /schema work without it
+    environment:
+      # The image defaults to production (/test-env disabled). Locally it
+      # defaults to development unless ENVIRONMENT is set in the shell or .env.
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+    restart: unless-stopped
