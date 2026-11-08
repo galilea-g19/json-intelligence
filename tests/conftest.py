@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import app.services.ai as ai
+from app.core.rate_limit import explain_rate_limiter
 from app.core.config import settings
 from app.main import app
 
@@ -24,6 +25,14 @@ def client():
     # raise_server_exceptions=False: deja que el handler genérico produzca el 500
     # en lugar de propagar la excepción al test.
     return TestClient(app, raise_server_exceptions=False)
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Cada test empieza con los contadores de /explain en cero."""
+    explain_rate_limiter.reset()
+    yield
+    explain_rate_limiter.reset()
 
 
 @pytest.fixture(autouse=True)

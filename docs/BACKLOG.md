@@ -293,7 +293,7 @@ README. Extra: job `docker` en el CI que construye la imagen, espera a que esté
 → 404, usuario no-root). Todas las dependencias tienen wheel para Linux/3.14,
 así que la imagen no necesita compilador (`--only-binary=:all:`).
 
-## Issue #27 — Rate limiting en `/explain`
+## Issue #27 — Rate limiting en `/explain` ✅
 
 **Descripción**
 
@@ -310,6 +310,18 @@ limitarlo por IP para que nadie agote los créditos.
 **DoD**
 
 - Superar el límite devuelve 429 sin llamar a Groq
+
+**Resultado:** limitador propio de ventana deslizante en memoria
+(`app/core/rate_limit.py`, sin dependencias nuevas).
+
+- Decisiones: **4/minuto y 40/día por IP**, **tope global de 500/día**,
+  implementación propia, contadores en memoria (una instancia; Redis si hubiera varias)
+- 429 con el envelope de error y `Retry-After` en segundos (redondeado hacia arriba)
+- Una petición rechazada no consume cuota ni llega a Groq; una inválida (422)
+  tampoco cuenta; un intento válido cuenta aunque Groq falle
+- `FORWARDED_ALLOW_IPS="*"` en el `Dockerfile` para leer la IP real detrás del proxy
+- 32 tests nuevos (reloj simulado) + paso en el job `docker` del CI que verifica
+  el 429 y la cuota por IP vía `X-Forwarded-For` dentro del contenedor
 
 ## Issue #28 — Deploy de la demo
 
@@ -329,7 +341,7 @@ limitarlo por IP para que nadie agote los créditos.
 
 1. ✅ #25 → deuda técnica (base limpia)
 2. ✅ #26 → Docker
-3. #27 → rate limiting (**antes** de publicar)
+3. ✅ #27 → rate limiting (**antes** de publicar)
 4. #28 → deploy
 
 # 🔧 Mantenimiento planificado

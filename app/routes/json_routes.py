@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from app.core.rate_limit import client_ip, explain_rate_limiter
 from app.models.request_models import JsonInput
 from app.models.response_models import AnalysisResponse, ErrorResponse, SchemaResponse, ExplainResponse
 from app.services.analyzer import analyze_json
@@ -81,20 +82,29 @@ async def generate_json_schema(payload: JsonInput):
         "explanation — summary, nesting depth, data types and the fields that "
         "look relevant. The model's answer is validated against "
         "`JsonExplanation` before being returned, so malformed AI output surfaces "
-        "as a 502 instead of leaking to the client."
+        "as a 502 instead of leaking to the client. "
+        "**Rate limited** (it is the only endpoint that costs money): by default "
+        "4 requests per minute and 40 per day per client IP, and 500 per day in "
+        "total. Over the limit it returns 429 with a `Retry-After` header."
     ),
     responses={
         **COMMON_ERRORS,
+        429: {"model": ErrorResponse, "description": "Rate limit reached; see the `Retry-After` header"},
         502: {"model": ErrorResponse, "description": "The AI failed or returned an unexpected format"},
     },
 )
-async def explain_json_endpoint(payload: JsonInput):
+async def explain_json_endpoint(payload: JsonInput, request: Request):
     """
     Receive a JSON, send it to Groq and return a structured explanation.
 
-    Errors (PayloadTooLargeError -> 413, AIResponseError -> 502) are handled by
-    the global exception handlers registered in app.core.exceptions.
+    Errors (RateLimitError -> 429, PayloadTooLargeError -> 413,
+    AIResponseError -> 502) are handled by the global exception handlers
+    registered in app.core.exceptions.
     """
+    # Checked here, after the body has been validated: a malformed request
+    # (422) doesn't use quota, and a rejected one never reaches Groq.
+    explain_rate_limiter.check(client_ip(request))
+
     data = payload.data
     explanation = explain_json(data)
 

@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     max_ai_json_bytes: int = 5000          # max size of the JSON sent to the AI (/explain)
     max_ai_json_chars: int = 10000
 
+    # Rate limits for /explain (Issue #27), the only endpoint that costs money.
+    # Rolling windows, counted in memory (one instance). 0 disables a limit.
+    explain_rate_per_minute: int = 4    # per client IP
+    explain_rate_per_day: int = 40      # per client IP
+    explain_global_per_day: int = 500   # all clients together: caps the Groq budget
+
     model_config = SettingsConfigDict(
         env_file=".env", 
         env_file_encoding="utf-8", 

@@ -14,4 +14,6 @@ services:
       # The image defaults to production (/test-env disabled). Locally it
       # defaults to development unless ENVIRONMENT is set in the shell or .env.
       ENVIRONMENT: ${ENVIRONMENT:-development}
+      # The /explain rate limits (EXPLAIN_RATE_PER_MINUTE, ...) come from .env;
+      # set them to 0 there to disable them while developing.
     restart: unless-stopped

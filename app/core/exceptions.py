@@ -4,6 +4,9 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
+import math
+
+
 class AppError(Exception):
     """Base application error. Carries its own HTTP status and message."""
     status_code = 500
@@ -13,6 +16,11 @@ class AppError(Exception):
         if message:
             self.message = message
         super().__init__(self.message)
+
+    @property
+    def headers(self) -> dict[str, str] | None:
+        """Extra HTTP headers for the error response, if any."""
+        return None
 
 
 class PayloadTooLargeError(AppError):
@@ -27,6 +35,21 @@ class AIResponseError(AppError):
     message = "AI response error"
 
 
+class RateLimitError(AppError):
+    """Too many requests to a rate-limited endpoint (/explain)."""
+    status_code = 429
+    message = "Too many requests"
+
+    def __init__(self, message: str | None = None, retry_after: float = 1):
+        super().__init__(message)
+        # Whole seconds, rounded up and never 0: retrying earlier is pointless.
+        self.retry_after = max(1, math.ceil(retry_after))
+
+    @property
+    def headers(self) -> dict[str, str]:
+        return {"Retry-After": str(self.retry_after)}
+
+
 def register_error_handlers(app: FastAPI):
     """Register global error handlers on the FastAPI application."""
 
@@ -39,6 +62,7 @@ def register_error_handlers(app: FastAPI):
                 "status_code": exc.status_code,
                 "path": request.url.path,
             },
+            headers=exc.headers,
         )
 
     @app.exception_handler(StarletteHTTPException)

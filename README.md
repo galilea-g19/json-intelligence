@@ -78,6 +78,7 @@ docker run --env-file .env -p 8000:8000 json-intelligence
 | Base image | `python:3.14-slim`, multi-stage (no pip or build layers in the final image) |
 | User | non-root (`appuser`, uid 10001) |
 | Port | `8000`, or whatever `$PORT` says (Render, Railway and Fly.io inject it) |
+| `FORWARDED_ALLOW_IPS` | `*` in the image: trusts the platform proxy's `X-Forwarded-For`, so the `/explain` rate limit sees each visitor's real IP |
 | `ENVIRONMENT` | `production` in the image (`/test-env` returns 404); `development` with `docker compose` unless you override it |
 | Health check | `GET /` every 30 s (`docker ps` shows `healthy`) |
 | Secrets | never baked in: `.env` is in `.dockerignore`, pass it at runtime with `--env-file` |
@@ -133,6 +134,9 @@ MAX_BODY_BYTES=1048576      # 1 MB — max size of any request body
 MAX_AI_JSON_BYTES=5000      # max size of the JSON forwarded to the LLM
 MAX_AI_JSON_CHARS=10000     # same limit, counted in characters
 ENVIRONMENT=development     # "production" disables /test-env (returns 404)
+EXPLAIN_RATE_PER_MINUTE=4   # /explain requests per client IP per minute (0 = off)
+EXPLAIN_RATE_PER_DAY=40     # /explain requests per client IP per day (0 = off)
+EXPLAIN_GLOBAL_PER_DAY=500  # /explain requests per day, all clients together (0 = off)
 ```
 
 `.env` is git-ignored. Nothing else needs configuring — there is no database.
@@ -276,6 +280,7 @@ responses add a generic `message`.
 | --- | --- |
 | `400` | The payload couldn't be processed by the analyzer/generator |
 | `413` | Body over `MAX_BODY_BYTES`, or JSON over the stricter AI limit |
+| `429` | `/explain` rate limit reached — the `Retry-After` header says how many seconds to wait |
 | `422` | `data` missing, or not a JSON object — includes a `details` array |
 | `502` | The AI call failed or returned a shape that doesn't match `JsonExplanation` |
 | `500` | Unexpected error (details hidden unless the app runs in debug) |
@@ -302,6 +307,8 @@ responses add a generic `message`.
 **Deterministic first, AI second.** Key counting, type detection and schema inference are pure Python — reproducible, instant and free. The LLM is reserved for natural language. It also means two thirds of the API keeps working with no API key at all.
 
 **The AI response is validated like any other input.** `explain_json()` requests JSON mode and then runs `JsonExplanation.model_validate()` on the answer. A model that hallucinates a different shape produces a clean `502`, never a malformed `200`.
+
+**Rate limiting where the money is.** `/explain` is the only endpoint that costs money, so only it is limited: 4 requests per minute and 40 per day per client IP, plus a global cap of 500 per day. The per-IP limits keep one visitor from hogging the demo; the global cap is what actually bounds the Groq bill, since IPs can change. It's a small in-house sliding-window limiter (`app/core/rate_limit.py`) rather than a library, so 429s use the same error envelope and the logic is unit-tested with a fake clock. Counters live in memory — right for a single instance; several instances would need a shared store such as Redis. A rejected request never reaches Groq and doesn't use quota.
 
 **Two size limits, not one.** `BodySizeLimitMiddleware` rejects oversized HTTP bodies (1 MB) before they're parsed; a stricter limit (5 KB) guards what gets forwarded to the LLM, where payload size means cost and latency. Both live in `Settings` as a single source of truth.
 
@@ -375,7 +382,8 @@ Routes stay under `/api/v1`: there were no external consumers to keep on the old
 
 - Live demo deployment
 - Schema export (download `.json`) from the UI
-- Rate limiting and authentication
+- Authentication / API keys for clients
+- Shared rate-limit store (Redis) if the API ever runs on several instances
 - Saved analyses and history
 - Advanced transformations and AI-powered recommendations
 

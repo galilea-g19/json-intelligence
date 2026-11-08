@@ -35,7 +35,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \
     PORT=8000 \
-    ENVIRONMENT=production
+    ENVIRONMENT=production \
+    FORWARDED_ALLOW_IPS="*"
 
 # Unprivileged user: the API never needs root.
 RUN useradd --create-home --uid 10001 appuser
@@ -56,6 +57,11 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/' % os.environ.get('PORT', '8000'), timeout=4)"]
 
+# FORWARDED_ALLOW_IPS="*": uvicorn trusts X-Forwarded-For from the platform's
+# reverse proxy, so request.client.host is the visitor's IP and the per-IP
+# rate limit of /explain works. On a PaaS the container is only reachable
+# through that proxy; if you expose it directly, set the proxy's IP instead.
+#
 # Shell form only to expand $PORT (Render/Railway/Fly inject it); exec keeps
 # uvicorn as PID 1 so it receives SIGTERM and shuts down cleanly.
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

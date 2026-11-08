@@ -80,6 +80,24 @@ jobs:
           # The image defaults to ENVIRONMENT=production: /test-env must be hidden
           test "$(code http://localhost:8000/test-env)" = 404
 
+      - name: Rate limit on /explain (per visitor IP via X-Forwarded-For)
+        # Requests reach the container from the Docker network, not 127.0.0.1,
+        # so this also proves FORWARDED_ALLOW_IPS lets uvicorn read the proxy header.
+        run: |
+          set -e
+          explain() {
+            curl -s -o /dev/null -D headers.txt -w '%{http_code}' -X POST \
+              http://localhost:8000/api/v1/json/explain \
+              -H 'Content-Type: application/json' -H "X-Forwarded-For: $1" \
+              -d '{"data":{"a":1}}'
+          }
+          # No API key in CI: the first 4 calls fail with 502, but they count
+          for i in 1 2 3 4; do test "$(explain 203.0.113.7)" = 502; done
+          test "$(explain 203.0.113.7)" = 429
+          grep -i '^retry-after: 60' headers.txt
+          # Another visitor keeps their own quota
+          test "$(explain 198.51.100.9)" = 502
+
       - name: Container runs as a non-root user
         run: test "$(docker exec api id -u)" != "0"
 
