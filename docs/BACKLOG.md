@@ -323,26 +323,72 @@ limitarlo por IP para que nadie agote los créditos.
 - 32 tests nuevos (reloj simulado) + paso en el job `docker` del CI que verifica
   el 429 y la cuota por IP vía `X-Forwarded-For` dentro del contenedor
 
-## Issue #28 — Deploy de la demo
+## Issue #30 — Rate limiting con contadores en Redis
+
+**Contexto**
+
+Plataforma elegida para la demo: **Vercel** (ya aloja el portafolio `porfile`
+y el proyecto `json-intelligence` está conectado al repo). En Vercel la API
+corre como funciones que escalan a **varias instancias** y se apagan cuando no
+hay tráfico, así que los contadores en memoria de #27 no sirven: cada instancia
+contaría por su cuenta (con 3 instancias, 12/min en vez de 4, y el tope global
+×3) y se reiniciarían al apagarse.
 
 **Tareas**
 
-- Elegir plataforma (Render / Fly.io / Railway) a partir de la imagen de #26
-- `GROQ_API_KEY` y `ENVIRONMENT=production` como secretos de la plataforma
-- Logs a stdout en producción (el filesystem del contenedor es efímero)
-- URL de la demo en el README (UI + `/docs`)
+- Backend de contadores en **Redis** (Vercel Marketplace, p. ej. Upstash, plan
+  gratuito) con la misma ventana deslizante: sorted sets por clave y operación
+  atómica (pipeline/`MULTI` o script Lua) para que dos peticiones simultáneas
+  no se cuelen
+- Selección automática: Redis si hay URL de conexión configurada; si no,
+  memoria (desarrollo local, Docker, tests)
+- Si Redis no responde: decidir y documentar el comportamiento (recomendado:
+  **fail-closed** en `/explain` → 503, porque protege el presupuesto de Groq)
+- Misma API pública: `check(ip)`, 429 + `Retry-After`, mismos mensajes
+- Tests: los actuales siguen pasando con memoria; tests del backend Redis con
+  un fake (`fakeredis`) y el reloj simulado
+- Documentar la variable de conexión en README y `compose.yaml`
 
 **DoD**
 
-- La UI y Swagger responden en una URL pública
-- `/test-env` devuelve 404 en esa URL
+- Con Redis configurado, el límite se respeta aunque haya varias instancias
+- Sin Redis, todo funciona como hoy (186+ tests en verde, CI en verde)
+
+## Issue #28 — Deploy de la demo en Vercel
+
+**Contexto**
+
+Plataforma: **Vercel**. Estado actual (nov. 2026): el proyecto existe y se
+despliega en cada push a `main`, pero está configurado **sin framework**, así
+que Vercel lo trata como sitio estático: `https://json-intelligence.vercel.app/`
+muestra el HTML de la UI y todo lo demás (`/ui/`, `/docs`, `/api/v1/json/*`)
+da 404. La API de Python no se ejecuta.
+
+**Tareas**
+
+- Configurar el proyecto para ejecutar la API: preset **FastAPI** nativo o
+  runtime **`container`** con el `Dockerfile` de #26 (decidir al empezar)
+- Variables de entorno en Vercel: `GROQ_API_KEY`, `ENVIRONMENT=production` y
+  la conexión a Redis de #30
+- Logs a stdout en producción (en Vercel no hay `logs/app.log` persistente)
+- Revisar la IP del cliente detrás del proxy de Vercel para el rate limiting
+- Verificar en la URL pública: `/ui/`, `/docs`, los 3 endpoints, `/test-env`
+  → 404, y el 429 de `/explain`
+- URL de la demo en el README; enlazarla desde el portafolio (`porfile`)
+
+**DoD**
+
+- La UI y Swagger responden en `https://json-intelligence.vercel.app`
+- `/analyze` y `/schema` responden 200; `/explain` responde con la API key real
+- `/test-env` devuelve 404 y el rate limit funciona en producción
 
 ## Orden EPIC 8
 
 1. ✅ #25 → deuda técnica (base limpia)
 2. ✅ #26 → Docker
 3. ✅ #27 → rate limiting (**antes** de publicar)
-4. #28 → deploy
+4. #30 → contadores del rate limiting en Redis (requisito de Vercel)
+5. #28 → deploy en Vercel
 
 # 🔧 Mantenimiento planificado
 
