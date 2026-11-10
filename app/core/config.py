@@ -19,11 +19,20 @@ class Settings(BaseSettings):
     explain_rate_per_day: int = 40      # per client IP
     explain_global_per_day: int = 500   # all clients together: caps the Groq budget
 
+    # Where the rate-limit counters live (Issue #30). Set (Vercel injects it
+    # from the Upstash integration) -> shared Redis, required when the API runs
+    # on several instances. Unset or empty -> process memory (local, Docker, tests).
+    redis_url: SecretStr | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env", 
         env_file_encoding="utf-8", 
         extra="ignore"
     )
+
+    @property
+    def redis_configured(self) -> bool:
+        return bool(self.redis_url and self.redis_url.get_secret_value().strip())
 
     @property
     def is_production(self) -> bool:

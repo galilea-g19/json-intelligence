@@ -1,5 +1,12 @@
 import json
 import logging
+import os
+
+# Los tests nunca deben usar un Redis real (ni gastar comandos de Upstash),
+# aunque el .env local tenga REDIS_URL: una variable de entorno vacía tiene
+# prioridad sobre el .env y deja el limitador en memoria. Va antes de importar
+# la app, que construye el limitador al importarse.
+os.environ["REDIS_URL"] = ""
 from unittest.mock import MagicMock
 
 import pytest

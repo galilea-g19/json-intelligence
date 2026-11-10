@@ -90,6 +90,7 @@ async def generate_json_schema(payload: JsonInput):
     responses={
         **COMMON_ERRORS,
         429: {"model": ErrorResponse, "description": "Rate limit reached; see the `Retry-After` header"},
+        503: {"model": ErrorResponse, "description": "The rate-limit store (Redis) is unreachable; /explain fails closed"},
         502: {"model": ErrorResponse, "description": "The AI failed or returned an unexpected format"},
     },
 )

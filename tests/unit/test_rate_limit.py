@@ -1,12 +1,26 @@
-"""Tests unitarios de app.core.rate_limit (issue #27). Reloj simulado: sin esperas reales."""
+"""Tests unitarios de app.core.rate_limit (issues #27 y #30).
+
+Reloj simulado: sin esperas reales. Cada test de comportamiento corre contra
+los DOS almacenes (memoria y Redis simulado con fakeredis): deben comportarse
+exactamente igual.
+"""
 from types import SimpleNamespace
 
+import fakeredis
 import pytest
 
 import app.core.rate_limit as rate_limit
 from app.core.config import settings
 from app.core.exceptions import RateLimitError
-from app.core.rate_limit import DAY, MINUTE, ExplainRateLimiter, SlidingWindowCounter, client_ip
+from app.core.rate_limit import (
+    DAY,
+    MINUTE,
+    ExplainRateLimiter,
+    MemoryStore,
+    RedisStore,
+    SlidingWindowCounter,
+    client_ip,
+)
 
 
 class FakeClock:
@@ -25,13 +39,20 @@ def clock():
     return FakeClock()
 
 
+@pytest.fixture(params=["memory", "redis"])
+def store(request):
+    if request.param == "memory":
+        return MemoryStore()
+    return RedisStore(fakeredis.FakeRedis())
+
+
 @pytest.fixture
-def limiter(clock, monkeypatch):
+def limiter(clock, store, monkeypatch):
     # Los valores decididos para el proyecto, explícitos para no depender del .env
     monkeypatch.setattr(settings, "explain_rate_per_minute", 4)
     monkeypatch.setattr(settings, "explain_rate_per_day", 40)
     monkeypatch.setattr(settings, "explain_global_per_day", 500)
-    return ExplainRateLimiter(clock=clock)
+    return ExplainRateLimiter(store=store, clock=clock)
 
 
 def hit(limiter, ip="1.1.1.1", times=1):
@@ -177,7 +198,7 @@ def test_zero_disables_a_limit(limiter, monkeypatch, setting):
     monkeypatch.setattr(settings, "explain_global_per_day", 0)
     monkeypatch.setattr(settings, setting, 0)
 
-    hit(limiter, times=1000)
+    hit(limiter, times=200)
 
 
 def test_limits_are_read_at_runtime(limiter, monkeypatch):
@@ -188,6 +209,8 @@ def test_limits_are_read_at_runtime(limiter, monkeypatch):
 
 
 def test_expired_keys_are_purged(limiter, clock, monkeypatch):
+    if limiter.store.name != "memory":
+        pytest.skip("Redis caduca las claves con PEXPIRE (ver test_redis_keys_use_prefix_and_expire)")
     monkeypatch.setattr(rate_limit, "PURGE_EVERY", 5)
     for i in range(4):
         limiter.check(f"10.0.0.{i}")

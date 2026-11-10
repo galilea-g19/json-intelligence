@@ -137,6 +137,7 @@ ENVIRONMENT=development     # "production" disables /test-env (returns 404)
 EXPLAIN_RATE_PER_MINUTE=4   # /explain requests per client IP per minute (0 = off)
 EXPLAIN_RATE_PER_DAY=40     # /explain requests per client IP per day (0 = off)
 EXPLAIN_GLOBAL_PER_DAY=500  # /explain requests per day, all clients together (0 = off)
+# REDIS_URL=redis://...      # shared rate-limit counters; unset = in memory (see below)
 ```
 
 `.env` is git-ignored. Nothing else needs configuring — there is no database.
@@ -281,6 +282,7 @@ responses add a generic `message`.
 | `400` | The payload couldn't be processed by the analyzer/generator |
 | `413` | Body over `MAX_BODY_BYTES`, or JSON over the stricter AI limit |
 | `429` | `/explain` rate limit reached — the `Retry-After` header says how many seconds to wait |
+| `503` | `/explain` only: the rate-limit store (Redis) is unreachable, so the endpoint fails closed |
 | `422` | `data` missing, or not a JSON object — includes a `details` array |
 | `502` | The AI call failed or returned a shape that doesn't match `JsonExplanation` |
 | `500` | Unexpected error (details hidden unless the app runs in debug) |
@@ -308,7 +310,9 @@ responses add a generic `message`.
 
 **The AI response is validated like any other input.** `explain_json()` requests JSON mode and then runs `JsonExplanation.model_validate()` on the answer. A model that hallucinates a different shape produces a clean `502`, never a malformed `200`.
 
-**Rate limiting where the money is.** `/explain` is the only endpoint that costs money, so only it is limited: 4 requests per minute and 40 per day per client IP, plus a global cap of 500 per day. The per-IP limits keep one visitor from hogging the demo; the global cap is what actually bounds the Groq bill, since IPs can change. It's a small in-house sliding-window limiter (`app/core/rate_limit.py`) rather than a library, so 429s use the same error envelope and the logic is unit-tested with a fake clock. Counters live in memory — right for a single instance; several instances would need a shared store such as Redis. A rejected request never reaches Groq and doesn't use quota.
+**Rate limiting where the money is.** `/explain` is the only endpoint that costs money, so only it is limited: 4 requests per minute and 40 per day per client IP, plus a global cap of 500 per day. The per-IP limits keep one visitor from hogging the demo; the global cap is what actually bounds the Groq bill, since IPs can change. It's a small in-house sliding-window limiter (`app/core/rate_limit.py`) rather than a library, so 429s use the same error envelope and the logic is unit-tested with a fake clock. A rejected request never reaches Groq and doesn't use quota.
+
+**Counters in Redis when there are several instances.** On Vercel the API runs on instances that scale up and down, so per-process counters would each count on their own. With `REDIS_URL` set (Vercel injects it from the Upstash integration) the counters live in Redis and the check-and-record is a single **Lua script**: atomic, one round trip, so two simultaneous requests can't both take the last slot. Without `REDIS_URL` (local, Docker, tests) they stay in memory. Every limiter test runs against both stores (Redis simulated with `fakeredis`), and CI runs two API containers against a real Redis to prove they share the limit. If Redis is down, `/explain` **fails closed** with a fast `503` instead of allowing unlimited paid calls; `/analyze` and `/schema` don't depend on it. Once an IP is rejected, each instance remembers it until its `Retry-After`, so a client hammering the endpoint costs almost no Redis commands — that keeps the Upstash free plan safe.
 
 **Two size limits, not one.** `BodySizeLimitMiddleware` rejects oversized HTTP bodies (1 MB) before they're parsed; a stricter limit (5 KB) guards what gets forwarded to the LLM, where payload size means cost and latency. Both live in `Settings` as a single source of truth.
 
@@ -383,7 +387,6 @@ Routes stay under `/api/v1`: there were no external consumers to keep on the old
 - Live demo deployment
 - Schema export (download `.json`) from the UI
 - Authentication / API keys for clients
-- Shared rate-limit store (Redis) if the API ever runs on several instances
 - Saved analyses and history
 - Advanced transformations and AI-powered recommendations
 

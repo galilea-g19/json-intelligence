@@ -35,6 +35,16 @@ class AIResponseError(AppError):
     message = "AI response error"
 
 
+class RateLimiterUnavailableError(AppError):
+    """The rate-limit store (Redis) can't be reached. /explain fails closed:
+    without a working limit it would be open to unlimited, paid AI calls."""
+    status_code = 503
+    message = (
+        "El servicio de explicación no está disponible temporalmente. "
+        "Intenta de nuevo en unos minutos."
+    )
+
+
 class RateLimitError(AppError):
     """Too many requests to a rate-limited endpoint (/explain)."""
     status_code = 429

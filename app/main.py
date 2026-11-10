@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
+from app.core.rate_limit import explain_rate_limiter
 from app.routes.json_routes import router
 from app.core.exceptions import register_error_handlers
 from app.core.logging import setup_logging
@@ -49,6 +50,7 @@ TAGS_METADATA = [
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    logger.info(f"/explain rate-limit store: {explain_rate_limiter.store.name}")
     logger.info("Application startup complete. Ready to accept requests.")
     yield
     logger.info("Application shutting down.")

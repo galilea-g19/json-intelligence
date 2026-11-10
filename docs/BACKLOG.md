@@ -323,7 +323,7 @@ limitarlo por IP para que nadie agote los créditos.
 - 32 tests nuevos (reloj simulado) + paso en el job `docker` del CI que verifica
   el 429 y la cuota por IP vía `X-Forwarded-For` dentro del contenedor
 
-## Issue #30 — Rate limiting con contadores en Redis
+## Issue #30 — Rate limiting con contadores en Redis ✅
 
 **Contexto**
 
@@ -353,6 +353,25 @@ contaría por su cuenta (con 3 instancias, 12/min en vez de 4, y el tope global
 
 - Con Redis configurado, el límite se respeta aunque haya varias instancias
 - Sin Redis, todo funciona como hoy (186+ tests en verde, CI en verde)
+
+**Resultado:**
+
+- Redis: **Upstash for Redis** (plan Free, 500 000 comandos/mes) desde el
+  Marketplace de Vercel, región `us-east-1`, conectado a Production y Preview
+  (no a Development: en local se usa memoria). Variable usada: `REDIS_URL`
+- Cliente `redis` (redis-py) en lugar del SDK REST de Upstash: estándar, sin
+  atarse al proveedor, testeable con `fakeredis`
+- Almacenes intercambiables (`MemoryStore` / `RedisStore`) con la misma
+  ventana deslizante; en Redis, un **script Lua atómico** por petición
+- **Fail-closed**: si Redis no responde → 503 en `/explain`, rápido (1
+  reintento como máximo; redis-py reintentaba varias veces por defecto)
+- **Caché local de bloqueos**: una IP rechazada no vuelve a consultar Redis
+  hasta su `Retry-After` (protege la cuota de comandos ante abuso)
+- Tests: todos los del limitador corren contra memoria **y** Redis
+  (`fakeredis[lua]`), más tests de instancias compartidas, 503 y caché.
+  226 tests, 100 % de cobertura en `rate_limit.py`
+- CI: dos contenedores de la API contra un **Redis real** comparten el límite;
+  con Redis apagado, `/explain` da 503 en pocos segundos y `/analyze` sigue en 200
 
 ## Issue #28 — Deploy de la demo en Vercel
 
@@ -387,7 +406,7 @@ da 404. La API de Python no se ejecuta.
 1. ✅ #25 → deuda técnica (base limpia)
 2. ✅ #26 → Docker
 3. ✅ #27 → rate limiting (**antes** de publicar)
-4. #30 → contadores del rate limiting en Redis (requisito de Vercel)
+4. ✅ #30 → contadores del rate limiting en Redis (requisito de Vercel)
 5. #28 → deploy en Vercel
 
 # 🔧 Mantenimiento planificado

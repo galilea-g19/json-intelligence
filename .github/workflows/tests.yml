@@ -101,6 +101,66 @@ jobs:
       - name: Container runs as a non-root user
         run: test "$(docker exec api id -u)" != "0"
 
+      # --- Redis rate-limit store (issue #30) --------------------------------
+      # Same image, now with REDIS_URL: two API containers (= two Vercel
+      # instances) share one real Redis. Exercises the Lua script on real
+      # Redis, not only on fakeredis.
+
+      - name: Start Redis and two API instances that share it
+        run: |
+          docker network create ci
+          docker run -d --name redis --network ci redis:7.4-alpine
+          for n in 1 2; do
+            docker run -d --name api-redis-$n --network ci -p 800$n:8000 \
+              -e REDIS_URL=redis://redis:6379/0 json-intelligence:ci
+          done
+          for n in 1 2; do
+            for i in $(seq 1 30); do
+              [ "$(docker inspect --format '{{.State.Health.Status}}' api-redis-$n)" = healthy ] && break
+              sleep 2
+            done
+            docker logs api-redis-$n 2>&1 | grep -F '/explain rate-limit store: redis'
+          done
+
+      - name: Instances share the per-IP limit through Redis
+        run: |
+          set -e
+          explain() {  # explain <port> <visitor ip>
+            curl -s -o /dev/null -D headers.txt -w '%{http_code}' -X POST \
+              http://localhost:$1/api/v1/json/explain \
+              -H 'Content-Type: application/json' -H "X-Forwarded-For: $2" \
+              -d '{"data":{"a":1}}'
+          }
+          # 2 calls on each instance = 4 in total for the same visitor
+          for port in 8001 8001 8002 8002; do test "$(explain $port 192.0.2.50)" = 502; done
+          # The 5th is rejected by EITHER instance: the counters are shared
+          test "$(explain 8001 192.0.2.50)" = 429
+          test "$(explain 8002 192.0.2.50)" = 429
+          grep -i '^retry-after:' headers.txt
+          # The counters really are in Redis
+          docker exec redis redis-cli --scan --pattern '{json-intelligence}:*' | tee keys.txt
+          test "$(wc -l < keys.txt)" -ge 3
+
+      - name: Fails closed (503) when Redis is down
+        run: |
+          set -e
+          docker stop redis
+          start=$(date +%s)
+          code=$(curl -s -o body.json -w '%{http_code}' -X POST \
+            http://localhost:8001/api/v1/json/explain \
+            -H 'Content-Type: application/json' -H 'X-Forwarded-For: 192.0.2.99' \
+            -d '{"data":{"a":1}}')
+          elapsed=$(( $(date +%s) - start ))
+          cat body.json; echo; echo "status=$code elapsed=${elapsed}s"
+          test "$code" = 503
+          test "$elapsed" -le 10   # fails fast: no long retry loop
+          # Free endpoints don't depend on Redis
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8001/api/v1/json/analyze \
+                   -H 'Content-Type: application/json' -d '{"data":{"a":1}}')" = 200
+
       - name: Container logs
         if: always()
-        run: docker logs api
+        run: |
+          for c in api api-redis-1 api-redis-2; do
+            echo "::group::$c"; docker logs $c 2>&1 || true; echo "::endgroup::"
+          done

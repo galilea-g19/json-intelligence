@@ -3,6 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
+from app.core.rate_limit import explain_rate_limiter
 from app.main import app
 
 URL = "/api/v1/json/explain"
@@ -87,7 +88,30 @@ def test_free_endpoints_are_not_limited(client, route):
         assert client.post(f"/api/v1/json/{route}", json=BODY).status_code == 200
 
 
-def test_openapi_documents_429(client):
+def test_openapi_documents_429_and_503(client):
     responses = client.get("/openapi.json").json()["paths"][URL]["post"]["responses"]
 
-    assert "429" in responses
+    assert {"429", "503"} <= set(responses)
+
+
+def test_unreachable_store_is_503_and_never_calls_ai(client, fake_groq, valid_explanation, monkeypatch):
+    class BrokenStore:
+        name = "redis"
+
+        def hit(self, *args):
+            raise ConnectionError("redis down")
+
+        def reset(self):
+            pass
+
+    monkeypatch.setattr(explain_rate_limiter, "store", BrokenStore())
+    create = fake_groq(valid_explanation)
+
+    r = client.post(URL, json=BODY)
+
+    assert r.status_code == 503
+    body = r.json()
+    assert body["status_code"] == 503
+    assert "no está disponible temporalmente" in body["error"]
+    assert "redis down" not in r.text
+    create.assert_not_called()

@@ -15,5 +15,6 @@ services:
       # defaults to development unless ENVIRONMENT is set in the shell or .env.
       ENVIRONMENT: ${ENVIRONMENT:-development}
       # The /explain rate limits (EXPLAIN_RATE_PER_MINUTE, ...) come from .env;
-      # set them to 0 there to disable them while developing.
+      # set them to 0 there to disable them while developing. Without
+      # REDIS_URL the counters live in memory, which is right for one container.
     restart: unless-stopped

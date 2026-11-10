@@ -76,6 +76,7 @@ def test_lifespan_logs_startup_and_shutdown(caplog):
             pass
 
     assert "Application startup complete. Ready to accept requests." in caplog.messages
+    assert "/explain rate-limit store: memory" in caplog.messages
     assert "Application shutting down." in caplog.messages
 
 
